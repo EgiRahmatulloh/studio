@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -60,24 +60,31 @@ interface AttendanceRecord extends AttendanceFormValues {
   timestamp: string;
 }
 
+const initialData: AttendanceRecord[] = [
+  {
+    id: "1",
+    timestamp: new Date().toISOString(),
+    posyanduName: "Posyandu Melati 1",
+    fullName: "Ibu Budi",
+    attendanceDate: new Date(),
+  },
+  {
+    id: "2",
+    timestamp: new Date(Date.now() - 86400000).toISOString(),
+    posyanduName: "Posyandu Mawar 2",
+    fullName: "Anak Ani",
+    attendanceDate: new Date(Date.now() - 86400000),
+  },
+];
+
 export default function Home() {
-  const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([
-    {
-      id: "1",
-      timestamp: new Date().toISOString(),
-      posyanduName: "Posyandu Melati 1",
-      fullName: "Ibu Budi",
-      attendanceDate: new Date(),
-    },
-    {
-      id: "2",
-      timestamp: new Date(Date.now() - 86400000).toISOString(),
-      posyanduName: "Posyandu Mawar 2",
-      fullName: "Anak Ani",
-      attendanceDate: new Date(Date.now() - 86400000),
-    },
-  ]);
+  const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>(initialData);
+  const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const form = useForm<AttendanceFormValues>({
     resolver: zodResolver(attendanceSchema),
@@ -95,10 +102,6 @@ export default function Home() {
       ...data,
     };
     setAttendanceData((prev) => [newRecord, ...prev]);
-    toast({
-      title: "Sukses!",
-      description: "Data kehadiran berhasil disimpan.",
-    });
     form.reset({
         posyanduName: "",
         fullName: "",
@@ -285,7 +288,7 @@ export default function Home() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {attendanceData.length > 0 ? (
+                        {isClient && attendanceData.length > 0 ? (
                           attendanceData.map((record) => (
                             <TableRow key={record.id}>
                               <TableCell className="whitespace-nowrap">
@@ -310,7 +313,7 @@ export default function Home() {
                               colSpan={4}
                               className="h-24 text-center"
                             >
-                              Belum ada data.
+                              {isClient ? "Belum ada data." : "Memuat..."}
                             </TableCell>
                           </TableRow>
                         )}
