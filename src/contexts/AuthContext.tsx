@@ -109,6 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const hasPermission = (permission: string): boolean => {
     if (!user) return false;
+    // Admin has all permissions. For other users, check if the permission is in their list.
     return user.role === 'ADMIN' || user.permissions.includes(permission);
   };
 
@@ -136,5 +137,3 @@ export function useAuth() {
   }
   return context;
 }
-
-    
