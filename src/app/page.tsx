@@ -9,13 +9,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Users, Activity, User, Shield } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 export default function DashboardPage() {
   const { user, loading: authLoading, hasPermission } = useAuth();
   const router = useRouter();
   const [totalKehadiran, setTotalKehadiran] = useState(0);
   const [totalKegiatan, setTotalKegiatan] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -26,7 +28,7 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchData() {
       if (!user) return;
-      setLoading(true);
+      setLoadingData(true);
       try {
         const token = localStorage.getItem('auth-token');
         const headers = { 'Authorization': `Bearer ${token}` };
@@ -34,9 +36,14 @@ export default function DashboardPage() {
         const promises = [];
         if(hasPermission('view_kehadiran')) {
             promises.push(fetch('/api/kehadiran', { headers }));
+        } else {
+            promises.push(Promise.resolve(null));
         }
+
         if(hasPermission('view_kegiatan')) {
             promises.push(fetch('/api/kegiatan', { headers }));
+        } else {
+            promises.push(Promise.resolve(null));
         }
 
         const [kehadiranRes, kegiatanRes] = await Promise.all(promises);
@@ -53,15 +60,18 @@ export default function DashboardPage() {
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
       } finally {
-        setLoading(false);
+        setLoadingData(false);
       }
     }
-    fetchData();
+    
+    if(user){
+        fetchData();
+    }
   }, [user, hasPermission]);
 
   if (authLoading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
           <p className="mt-2">Loading...</p>
@@ -101,7 +111,7 @@ export default function DashboardPage() {
               </Badge>
             </div>
             {user.permissions.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-2 pt-2">
                 <span className="text-sm font-medium">Permissions:</span>
                 <div className="flex flex-wrap gap-1">
                   {user.permissions.map((permission) => (
@@ -126,8 +136,8 @@ export default function DashboardPage() {
                 <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                {loading ? (
-                    <div className="h-8 w-1/2 animate-pulse rounded-md bg-muted" />
+                {loadingData ? (
+                    <Skeleton className="h-8 w-1/2" />
                 ) : (
                     <div className="text-2xl font-bold">{totalKehadiran}</div>
                 )}
@@ -149,8 +159,8 @@ export default function DashboardPage() {
              <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-             {loading ? (
-                 <div className="h-8 w-1/2 animate-pulse rounded-md bg-muted" />
+             {loadingData ? (
+                 <Skeleton className="h-8 w-1/2" />
             ) : (
                 <div className="text-2xl font-bold">{totalKegiatan}</div>
             )}
