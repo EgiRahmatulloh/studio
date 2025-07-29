@@ -1,18 +1,13 @@
 import type {Metadata} from 'next';
 import './globals.css';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { Toaster } from '@/components/ui/toaster';
+import { AppSidebar } from '@/components/AppSidebar';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
   SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import Link from 'next/link';
-import { Activity, Home, Users } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Firebase Studio App',
@@ -39,47 +34,18 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <SidebarProvider>
-          <Sidebar>
-            <SidebarHeader>
-              <h2 className="text-lg font-semibold">Posyandu App</h2>
-            </SidebarHeader>
-            <SidebarContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link href="/">
-                      <Home />
-                      Dashboard
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link href="/kehadiran">
-                      <Users />
-                      Kehadiran
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link href="/kegiatan">
-                      <Activity />
-                      Kegiatan
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarContent>
-          </Sidebar>
-          <SidebarInset>
-            <header className="p-4 sm:p-6 md:hidden">
-                <SidebarTrigger />
-            </header>
-            <main className="p-4 sm:p-6">{children}</main>
-          </SidebarInset>
-        </SidebarProvider>
+        <AuthProvider>
+          <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset>
+              <header className="p-4 sm:p-6 md:hidden">
+                  <SidebarTrigger />
+              </header>
+              <main className="p-4 sm:p-6">{children}</main>
+            </SidebarInset>
+          </SidebarProvider>
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );
