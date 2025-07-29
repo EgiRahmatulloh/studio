@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, Edit, Plus, UserPlus } from 'lucide-react';
+import { Trash2, Edit, UserPlus } from 'lucide-react';
 
 interface User {
   id: string;
@@ -35,7 +35,6 @@ export default function AdminPage() {
   // Form states
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [showEditPermissions, setShowEditPermissions] = useState(false);
-  const [showCreatePermission, setShowCreatePermission] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   
   const [newUser, setNewUser] = useState({
@@ -44,7 +43,6 @@ export default function AdminPage() {
     role: 'USER' as 'ADMIN' | 'USER',
   });
   
-  const [newPermission, setNewPermission] = useState('');
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
   useEffect(() => {
@@ -211,42 +209,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleCreatePermission = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      const response = await fetch('/api/admin/permissions', {
-        method: 'POST',
-        headers: getAuthHeader(),
-        body: JSON.stringify({ name: newPermission }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast({
-          title: 'Berhasil',
-          description: 'Permission berhasil dibuat',
-        });
-        setShowCreatePermission(false);
-        setNewPermission('');
-        fetchData();
-      } else {
-        toast({
-          title: 'Error',
-          description: data.error,
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Terjadi kesalahan server',
-        variant: 'destructive',
-      });
-    }
-  };
-
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -256,38 +218,6 @@ export default function AdminPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Admin Panel</h1>
         <div className="space-x-2">
-          <Dialog open={showCreatePermission} onOpenChange={setShowCreatePermission}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Plus className="w-4 h-4 mr-2" />
-                Tambah Permission
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Tambah Permission Baru</DialogTitle>
-                <DialogDescription>
-                  Buat permission baru untuk mengatur akses fitur
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleCreatePermission} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="permission-name">Nama Permission</Label>
-                  <Input
-                    id="permission-name"
-                    value={newPermission}
-                    onChange={(e) => setNewPermission(e.target.value)}
-                    placeholder="contoh: view_reports"
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full">
-                  Buat Permission
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-
           <Dialog open={showCreateUser} onOpenChange={setShowCreateUser}>
             <DialogTrigger asChild>
               <Button>
@@ -446,5 +376,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
