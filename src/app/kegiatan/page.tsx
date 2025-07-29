@@ -49,6 +49,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Image from 'next/image';
 import Link from 'next/link';
+import { useAuth } from "@/contexts/AuthContext";
 
 
 const numberSchema = z.preprocess(
@@ -112,6 +113,10 @@ export default function KegiatanPage() {
   const [activityData, setActivityData] = useState<ActivityRecord[]>([]);
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
+  const { hasPermission } = useAuth();
+  
+  const canCreate = hasPermission('create_kegiatan');
+  const canExport = hasPermission('export_data');
 
   useEffect(() => {
     setIsClient(true);
@@ -271,133 +276,137 @@ export default function KegiatanPage() {
               Catat dan kelola data kegiatan Posyandu.
             </p>
           </div>
-          <Button onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" />
-            Export ke XLSX
-          </Button>
+          {canExport && (
+            <Button onClick={handleExport}>
+              <Download className="mr-2 h-4 w-4" />
+              Export ke XLSX
+            </Button>
+          )}
         </header>
 
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-5">
-          <div className="lg:col-span-2">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle>Catat Kegiatan Baru</CardTitle>
-                <CardDescription>
-                  Isi formulir untuk melaporkan kegiatan baru.
-                </CardDescription>
-              </CardHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                  <CardContent className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="posyanduName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nama Posyandu</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Contoh: Posyandu Melati 1" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                     <FormField
-                      control={form.control}
-                      name="activityDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Tanggal Kegiatan</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {field.value ? (
-                                    format(field.value, "PPP", { locale: id })
-                                  ) : (
-                                    <span>Pilih tanggal</span>
-                                  )}
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) =>
-                                  date > new Date() || date < new Date("2000-01-01")
-                                }
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Separator />
-                    <div>
-                        <h3 className="mb-4 text-lg font-medium">Jumlah Sasaran</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField control={form.control} name="sasaranBayi" render={({ field }) => (<FormItem><FormLabel>Bayi</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="sasaranBalita" render={({ field }) => (<FormItem><FormLabel>Balita</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="sasaranBumil" render={({ field }) => (<FormItem><FormLabel>Bumil</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="sasaranBufus" render={({ field }) => (<FormItem><FormLabel>Bufus</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="sasaranBusu" render={({ field }) => (<FormItem><FormLabel>Busu</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="sasaranRemaja" render={({ field }) => (<FormItem><FormLabel>Remaja</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="sasaranDewasa" render={({ field }) => (<FormItem><FormLabel>Dewasa</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="sasaranLansia" render={({ field }) => (<FormItem><FormLabel>Lansia</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                        </div>
-                    </div>
-                     <Separator />
-                     <div>
-                        <h3 className="mb-4 text-lg font-medium">Pengunjung</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField control={form.control} name="pengunjungBayi" render={({ field }) => (<FormItem><FormLabel>Bayi</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="pengunjungBalita" render={({ field }) => (<FormItem><FormLabel>Balita</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="pengunjungBumil" render={({ field }) => (<FormItem><FormLabel>Bumil</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="pengunjungBufus" render={({ field }) => (<FormItem><FormLabel>Bufus</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="pengunjungBusu" render={({ field }) => (<FormItem><FormLabel>Busu</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="pengunjungRemaja" render={({ field }) => (<FormItem><FormLabel>Remaja</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="pengunjungDewasa" render={({ field }) => (<FormItem><FormLabel>Dewasa</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="pengunjungLansia" render={({ field }) => (<FormItem><FormLabel>Lansia</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                        </div>
-                    </div>
-                     <Separator />
-                     <FormField
+        <div className={cn("grid grid-cols-1 gap-12", canCreate && "lg:grid-cols-5")}>
+          {canCreate && (
+            <div className="lg:col-span-2">
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle>Catat Kegiatan Baru</CardTitle>
+                  <CardDescription>
+                    Isi formulir untuk melaporkan kegiatan baru.
+                  </CardDescription>
+                </CardHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <CardContent className="space-y-6">
+                      <FormField
                         control={form.control}
-                        name="kegiatanFoto"
+                        name="posyanduName"
                         render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Link Foto Kegiatan (Google Drive)</FormLabel>
+                          <FormItem>
+                            <FormLabel>Nama Posyandu</FormLabel>
                             <FormControl>
-                               <Input placeholder="https://docs.google.com/..." {...field} />
+                              <Input placeholder="Contoh: Posyandu Melati 1" {...field} />
                             </FormControl>
-                            <FormDescription>Salin dan tempel tautan dari Google Drive.</FormDescription>
                             <FormMessage />
-                            </FormItem>
+                          </FormItem>
                         )}
-                        />
-                  </CardContent>
-                  <CardFooter>
-                    <Button type="submit" className="w-full">
-                      Simpan Kegiatan
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Form>
-            </Card>
-          </div>
+                      />
+                      <FormField
+                        control={form.control}
+                        name="activityDate"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Tanggal Kegiatan</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "w-full justify-start text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {field.value ? (
+                                      format(field.value, "PPP", { locale: id })
+                                    ) : (
+                                      <span>Pilih tanggal</span>
+                                    )}
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  disabled={(date) =>
+                                    date > new Date() || date < new Date("2000-01-01")
+                                  }
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Separator />
+                      <div>
+                          <h3 className="mb-4 text-lg font-medium">Jumlah Sasaran</h3>
+                          <div className="grid grid-cols-2 gap-4">
+                              <FormField control={form.control} name="sasaranBayi" render={({ field }) => (<FormItem><FormLabel>Bayi</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                              <FormField control={form.control} name="sasaranBalita" render={({ field }) => (<FormItem><FormLabel>Balita</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                              <FormField control={form.control} name="sasaranBumil" render={({ field }) => (<FormItem><FormLabel>Bumil</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                              <FormField control={form.control} name="sasaranBufus" render={({ field }) => (<FormItem><FormLabel>Bufus</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                              <FormField control={form.control} name="sasaranBusu" render={({ field }) => (<FormItem><FormLabel>Busu</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                              <FormField control={form.control} name="sasaranRemaja" render={({ field }) => (<FormItem><FormLabel>Remaja</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                              <FormField control={form.control} name="sasaranDewasa" render={({ field }) => (<FormItem><FormLabel>Dewasa</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                              <FormField control={form.control} name="sasaranLansia" render={({ field }) => (<FormItem><FormLabel>Lansia</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                          </div>
+                      </div>
+                      <Separator />
+                      <div>
+                          <h3 className="mb-4 text-lg font-medium">Pengunjung</h3>
+                          <div className="grid grid-cols-2 gap-4">
+                              <FormField control={form.control} name="pengunjungBayi" render={({ field }) => (<FormItem><FormLabel>Bayi</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                              <FormField control={form.control} name="pengunjungBalita" render={({ field }) => (<FormItem><FormLabel>Balita</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                              <FormField control={form.control} name="pengunjungBumil" render={({ field }) => (<FormItem><FormLabel>Bumil</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                              <FormField control={form.control} name="pengunjungBufus" render={({ field }) => (<FormItem><FormLabel>Bufus</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                              <FormField control={form.control} name="pengunjungBusu" render={({ field }) => (<FormItem><FormLabel>Busu</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                              <FormField control={form.control} name="pengunjungRemaja" render={({ field }) => (<FormItem><FormLabel>Remaja</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                              <FormField control={form.control} name="pengunjungDewasa" render={({ field }) => (<FormItem><FormLabel>Dewasa</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                              <FormField control={form.control} name="pengunjungLansia" render={({ field }) => (<FormItem><FormLabel>Lansia</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                          </div>
+                      </div>
+                      <Separator />
+                      <FormField
+                          control={form.control}
+                          name="kegiatanFoto"
+                          render={({ field }) => (
+                              <FormItem>
+                              <FormLabel>Link Foto Kegiatan (Google Drive)</FormLabel>
+                              <FormControl>
+                                <Input placeholder="https://docs.google.com/..." {...field} />
+                              </FormControl>
+                              <FormDescription>Salin dan tempel tautan dari Google Drive.</FormDescription>
+                              <FormMessage />
+                              </FormItem>
+                          )}
+                          />
+                    </CardContent>
+                    <CardFooter>
+                      <Button type="submit" className="w-full">
+                        Simpan Kegiatan
+                      </Button>
+                    </CardFooter>
+                  </form>
+                </Form>
+              </Card>
+            </div>
+          )}
 
-          <div className="lg:col-span-3">
+          <div className={cn(canCreate ? "lg:col-span-3" : "lg:col-span-5")}>
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle>Data Kegiatan</CardTitle>
@@ -463,3 +472,5 @@ export default function KegiatanPage() {
     </>
   );
 }
+
+    

@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/table";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const attendanceSchema = z.object({
   posyanduName: z.string().min(1, { message: "Nama Posyandu wajib diisi." }),
@@ -68,6 +69,10 @@ export default function KehadiranPage() {
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
+  const { hasPermission } = useAuth();
+  
+  const canCreate = hasPermission('create_kehadiran');
+  const canExport = hasPermission('export_data');
 
   useEffect(() => {
     setIsClient(true);
@@ -182,115 +187,119 @@ export default function KehadiranPage() {
               Sistem absensi digital untuk Posyandu
             </p>
           </div>
-          <Button onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" />
-            Export ke XLSX
-          </Button>
+          {canExport && (
+            <Button onClick={handleExport}>
+              <Download className="mr-2 h-4 w-4" />
+              Export ke XLSX
+            </Button>
+          )}
         </header>
 
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-5">
-          <div className="lg:col-span-2">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle>Catat Kehadiran Baru</CardTitle>
-                <CardDescription>
-                  Isi formulir di bawah ini untuk mencatat kehadiran.
-                </CardDescription>
-              </CardHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                  <CardContent className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="posyanduName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nama Posyandu</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Contoh: Posyandu Melati 1"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="fullName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nama Lengkap</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Contoh: Ibu Budi"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="attendanceDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Tanggal Kehadiran</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {field.value ? (
-                                    format(field.value, "PPP", {
-                                      locale: id,
-                                    })
-                                  ) : (
-                                    <span>Pilih tanggal</span>
-                                  )}
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent
-                              className="w-auto p-0"
-                              align="start"
-                            >
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                disabled={(date) =>
-                                  date > new Date() ||
-                                  date < new Date("2000-01-01")
-                                }
-                                initialFocus
+        <div className={cn("grid grid-cols-1 gap-12", canCreate && "lg:grid-cols-5")}>
+          {canCreate && (
+            <div className="lg:col-span-2">
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle>Catat Kehadiran Baru</CardTitle>
+                  <CardDescription>
+                    Isi formulir di bawah ini untuk mencatat kehadiran.
+                  </CardDescription>
+                </CardHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <CardContent className="space-y-6">
+                      <FormField
+                        control={form.control}
+                        name="posyanduName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nama Posyandu</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Contoh: Posyandu Melati 1"
+                                {...field}
                               />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                  <CardFooter>
-                    <Button type="submit" className="w-full">
-                      Simpan
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Form>
-            </Card>
-          </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="fullName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nama Lengkap</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Contoh: Ibu Budi"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="attendanceDate"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Tanggal Kehadiran</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "w-full justify-start text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {field.value ? (
+                                      format(field.value, "PPP", {
+                                        locale: id,
+                                      })
+                                    ) : (
+                                      <span>Pilih tanggal</span>
+                                    )}
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                              >
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  disabled={(date) =>
+                                    date > new Date() ||
+                                    date < new Date("2000-01-01")
+                                  }
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </CardContent>
+                    <CardFooter>
+                      <Button type="submit" className="w-full">
+                        Simpan
+                      </Button>
+                    </CardFooter>
+                  </form>
+                </Form>
+              </Card>
+            </div>
+          )}
 
-          <div className="lg:col-span-3">
+          <div className={cn(canCreate ? "lg:col-span-3" : "lg:col-span-5")}>
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle>Data Kehadiran</CardTitle>
@@ -351,3 +360,5 @@ export default function KehadiranPage() {
     </>
   );
 }
+
+    
