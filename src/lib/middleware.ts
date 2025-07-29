@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, AuthUser } from './auth';
 
-export function withAuth(handler: (req: NextRequest, user: AuthUser) => Promise<NextResponse>) {
-  return async (req: NextRequest) => {
+type HandlerWithParams = (
+  req: NextRequest,
+  user: AuthUser,
+  context: { params: any }
+) => Promise<NextResponse>;
+
+export function withAuth(handler: HandlerWithParams | ((req: NextRequest, user: AuthUser) => Promise<NextResponse>)) {
+  return async (req: NextRequest, context: { params: any }) => {
     try {
       const token = req.headers.get('authorization')?.replace('Bearer ', '') || 
                    req.cookies.get('auth-token')?.value;
@@ -15,28 +21,29 @@ export function withAuth(handler: (req: NextRequest, user: AuthUser) => Promise<
       if (!user) {
         return NextResponse.json({ error: 'Token tidak valid' }, { status: 401 });
       }
-
-      return handler(req, user);
+      
+      // Pass both req, user, and context (which contains params) to the handler
+      return (handler as HandlerWithParams)(req, user, context);
     } catch (error) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
   };
 }
 
-export function withAdminAuth(handler: (req: NextRequest, user: AuthUser) => Promise<NextResponse>) {
-  return withAuth(async (req: NextRequest, user: AuthUser) => {
+export function withAdminAuth(handler: HandlerWithParams) {
+  return withAuth(async (req: NextRequest, user: AuthUser, context: { params: any }) => {
     if (user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Akses ditolak. Hanya admin yang diizinkan.' }, { status: 403 });
     }
-    return handler(req, user);
+    return handler(req, user, context);
   });
 }
 
-export function withPermission(permission: string, handler: (req: NextRequest, user: AuthUser) => Promise<NextResponse>) {
-  return withAuth(async (req: NextRequest, user: AuthUser) => {
+export function withPermission(permission: string, handler: HandlerWithParams) {
+  return withAuth(async (req: NextRequest, user: AuthUser, context: { params: any }) => {
     if (user.role !== 'ADMIN' && !user.permissions.includes(permission)) {
       return NextResponse.json({ error: `Akses ditolak. Diperlukan izin: ${permission}` }, { status: 403 });
     }
-    return handler(req, user);
+    return handler(req, user, context);
   });
 }

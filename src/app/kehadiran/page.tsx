@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Calendar as CalendarIcon, Download } from "lucide-react";
+import { Calendar as CalendarIcon, Download, Edit } from "lucide-react";
 import * as XLSX from "xlsx";
 
 import { cn } from "@/lib/utils";
@@ -21,6 +21,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -62,18 +71,21 @@ interface AttendanceRecord {
   timestamp: string;
   posyanduName: string;
   fullName: string;
-  attendanceDate: string; // Changed to string to match ISO format from API
+  attendanceDate: string;
 }
 
 export default function KehadiranPage() {
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
   const { hasPermission, user } = useAuth();
   
   const canCreate = hasPermission('create_kehadiran');
   const canExport = hasPermission('export_data');
   const canView = hasPermission('view_kehadiran');
+  const canEdit = hasPermission('edit_kehadiran');
 
   useEffect(() => {
     setIsClient(true);
@@ -81,6 +93,22 @@ export default function KehadiranPage() {
         fetchAttendances();
     }
   }, [user, canView]);
+
+  useEffect(() => {
+    if (editingRecord) {
+      form.reset({
+        posyanduName: editingRecord.posyanduName,
+        fullName: editingRecord.fullName,
+        attendanceDate: new Date(editingRecord.attendanceDate),
+      });
+    } else {
+      form.reset({
+          posyanduName: "",
+          fullName: "",
+          attendanceDate: new Date(),
+      });
+    }
+  }, [editingRecord]);
 
   const fetchAttendances = async () => {
     try {
@@ -115,16 +143,24 @@ export default function KehadiranPage() {
     },
   });
 
-  async function onSubmit(data: AttendanceFormValues) {
+  const handleEditClick = (record: AttendanceRecord) => {
+    setEditingRecord(record);
+    setIsEditDialogOpen(true);
+  };
+
+  async function onSaveSubmit(data: AttendanceFormValues) {
     const payload = {
       ...data,
-      attendanceDate: data.attendanceDate.toISOString(), // Convert Date to ISO string
+      attendanceDate: data.attendanceDate.toISOString(),
     };
+    
+    const apiPath = editingRecord ? `/api/kehadiran/${editingRecord.id}` : '/api/kehadiran';
+    const method = editingRecord ? 'PUT' : 'POST';
 
     try {
       const token = localStorage.getItem('auth-token');
-      const response = await fetch('/api/kehadiran', {
-        method: 'POST',
+      const response = await fetch(apiPath, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -133,26 +169,34 @@ export default function KehadiranPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save attendance');
+        throw new Error(`Failed to ${editingRecord ? 'update' : 'save'} attendance`);
       }
 
-      const newRecord: AttendanceRecord = await response.json();
-      setAttendanceData((prev) => [newRecord, ...prev]);
+      const resultRecord: AttendanceRecord = await response.json();
+
+      if (editingRecord) {
+        setAttendanceData(prev => prev.map(r => r.id === editingRecord.id ? resultRecord : r));
+      } else {
+        setAttendanceData(prev => [resultRecord, ...prev]);
+      }
+      
       form.reset({
           posyanduName: "",
           fullName: "",
           attendanceDate: new Date(),
       });
+      setEditingRecord(null);
+      setIsEditDialogOpen(false);
       toast({
           title: "Sukses",
-          description: "Data kehadiran berhasil disimpan.",
+          description: `Data kehadiran berhasil ${editingRecord ? 'diperbarui' : 'disimpan'}.`,
       });
     } catch (error) {
-      console.error("Error saving attendance:", error);
+      console.error(`Error ${editingRecord ? 'updating' : 'saving'} attendance:`, error);
       toast({
         variant: "destructive",
         title: "Gagal Menyimpan Data",
-        description: "Terjadi kesalahan saat menyimpan data kehadiran.",
+        description: `Terjadi kesalahan saat ${editingRecord ? 'memperbarui' : 'menyimpan'} data kehadiran.`,
       });
     }
   }
@@ -171,7 +215,7 @@ export default function KehadiranPage() {
         "Timestamp": new Date(row.timestamp).toLocaleString("id-ID"),
         "Nama Posyandu": row.posyanduName,
         "Nama Lengkap": row.fullName,
-        "Tanggal Kehadiran": format(row.attendanceDate, "yyyy-MM-dd", { locale: id }),
+        "Tanggal Kehadiran": format(new Date(row.attendanceDate), "yyyy-MM-dd", { locale: id }),
     }));
     
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -185,6 +229,94 @@ export default function KehadiranPage() {
       description: "Data kehadiran telah diunduh sebagai XLSX.",
     });
   }
+
+  const renderForm = (isEdit: boolean) => (
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSaveSubmit)} id={isEdit ? "edit-kehadiran-form" : "create-kehadiran-form"}>
+          <CardContent className="space-y-6">
+            <FormField
+              control={form.control}
+              name="posyanduName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nama Posyandu</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Contoh: Posyandu Melati 1"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="fullName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nama Lengkap</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Contoh: Ibu Budi"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="attendanceDate"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Tanggal Kehadiran</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? (
+                            format(field.value, "PPP", {
+                              locale: id,
+                            })
+                          ) : (
+                            <span>Pilih tanggal</span>
+                          )}
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-auto p-0"
+                      align="start"
+                    >
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date > new Date() ||
+                          date < new Date("2000-01-01")
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </form>
+      </Form>
+  )
 
   if (!canView) {
       return (
@@ -225,96 +357,12 @@ export default function KehadiranPage() {
                     Isi formulir di bawah ini untuk mencatat kehadiran.
                   </CardDescription>
                 </CardHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <CardContent className="space-y-6">
-                      <FormField
-                        control={form.control}
-                        name="posyanduName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nama Posyandu</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="Contoh: Posyandu Melati 1"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="fullName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nama Lengkap</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="Contoh: Ibu Budi"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="attendanceDate"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-col">
-                            <FormLabel>Tanggal Kehadiran</FormLabel>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                      "w-full justify-start text-left font-normal",
-                                      !field.value && "text-muted-foreground"
-                                    )}
-                                  >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {field.value ? (
-                                      format(field.value, "PPP", {
-                                        locale: id,
-                                      })
-                                    ) : (
-                                      <span>Pilih tanggal</span>
-                                    )}
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent
-                                className="w-auto p-0"
-                                align="start"
-                              >
-                                <Calendar
-                                  mode="single"
-                                  selected={field.value}
-                                  onSelect={field.onChange}
-                                  disabled={(date) =>
-                                    date > new Date() ||
-                                    date < new Date("2000-01-01")
-                                  }
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </CardContent>
-                    <CardFooter>
-                      <Button type="submit" className="w-full">
+                {renderForm(false)}
+                <CardFooter>
+                    <Button type="submit" form="create-kehadiran-form" className="w-full">
                         Simpan
-                      </Button>
-                    </CardFooter>
-                  </form>
-                </Form>
+                    </Button>
+                </CardFooter>
               </Card>
             </div>
           )}
@@ -336,6 +384,7 @@ export default function KehadiranPage() {
                         <TableHead>Nama Posyandu</TableHead>
                         <TableHead>Nama Lengkap</TableHead>
                         <TableHead>Tanggal Kehadiran</TableHead>
+                        {canEdit && <TableHead>Aksi</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -356,12 +405,23 @@ export default function KehadiranPage() {
                                 locale: id,
                               })}
                             </TableCell>
+                             {canEdit && (
+                                <TableCell>
+                                    <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleEditClick(record)}
+                                    >
+                                    <Edit className="h-4 w-4" />
+                                    </Button>
+                                </TableCell>
+                             )}
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
                           <TableCell
-                            colSpan={4}
+                            colSpan={canEdit ? 5 : 4}
                             className="h-24 text-center"
                           >
                             {isClient ? "Belum ada data." : "Memuat..."}
@@ -376,6 +436,27 @@ export default function KehadiranPage() {
           </div>
         </div>
       </div>
+      
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Edit Data Kehadiran</DialogTitle>
+                <DialogDescription>
+                    Perbarui informasi kehadiran di bawah ini.
+                </DialogDescription>
+            </DialogHeader>
+            {renderForm(true)}
+            <DialogFooter>
+                <Button onClick={() => setIsEditDialogOpen(false)} variant="outline">
+                    Batal
+                </Button>
+                <Button type="submit" form="edit-kehadiran-form">
+                    Simpan Perubahan
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Toaster />
     </>
   );

@@ -88,8 +88,8 @@ npm run dev
 Setelah menjalankan seed script, tersedia akun default:
 
 ### Admin
-- **Email**: `admin@posyandu.com`
-- **Password**: `admin123`
+- **Password**: `a- **Email**: `admin@posyandu.com`
+dmin123`
 - **Akses**: Semua fitur + panel admin
 
 ### User Demo
