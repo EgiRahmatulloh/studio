@@ -51,7 +51,7 @@ import Image from 'next/image';
 
 
 const numberSchema = z.preprocess(
-    (a) => (a === '' ? undefined : parseInt(String(a), 10)),
+    (a) => (a === '' || a === undefined || a === null ? 0 : parseInt(String(a), 10)),
     z.number().min(0, "Jumlah tidak boleh negatif").optional().default(0)
 );
 
@@ -156,35 +156,59 @@ export default function KegiatanPage() {
       return;
     }
 
-    const dataToExport = activityData.map((row) => ({
-      'Nama Posyandu': row.posyanduName,
-      'Tanggal Kegiatan': format(row.activityDate, 'yyyy-MM-dd'),
-      'Bayi (S)': row.sasaranBayi,
-      'Bayi (P)': row.pengunjungBayi,
-      'Balita (S)': row.sasaranBalita,
-      'Balita (P)': row.pengunjungBalita,
-      'Bumil (S)': row.sasaranBumil,
-      'Bumil (P)': row.pengunjungBumil,
-      'Bufus (S)': row.sasaranBufus,
-      'Bufus (P)': row.pengunjungBufus,
-      'Busu (S)': row.sasaranBusu,
-      'Busu (P)': row.pengunjungBusu,
-      'Remaja (S)': row.sasaranRemaja,
-      'Remaja (P)': row.pengunjungRemaja,
-      'Dewasa (S)': row.sasaranDewasa,
-      'Dewasa (P)': row.pengunjungDewasa,
-      'Lansia (S)': row.sasaranLansia,
-      'Lansia (P)': row.pengunjungLansia,
-      'Total Sasaran': row.totalSasaran,
-      'Total Pengunjung': row.totalPengunjung,
-      'Timestamp': new Date(row.timestamp).toLocaleString('id-ID'),
-    }));
+    const header1 = ['Nama Posyandu', 'Tanggal Kegiatan', 'Jumlah sasaran', '', '', '', '', '', '', '', 'Pengunjung', '', '', '', '', '', '', '', 'Foto Kegiatan'];
+    const header2 = ['', '', 'Bayi', 'Balita', 'Bumil', 'Bufus', 'Busu', 'Remaja', 'Dewasa', 'Lansia', 'Total', 'Bayi', 'Balita', 'Bumil', 'Bufus', 'Busu', 'Remaja', 'Dewasa', 'Lansia', 'Total', ''];
     
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const dataForExport = activityData.map(item => {
+      return [
+        item.posyanduName,
+        format(item.activityDate, 'yyyy-MM-dd'),
+        item.sasaranBayi || 0,
+        item.sasaranBalita || 0,
+        item.sasaranBumil || 0,
+        item.sasaranBufus || 0,
+        item.sasaranBusu || 0,
+        item.sasaranRemaja || 0,
+        item.sasaranDewasa || 0,
+        item.sasaranLansia || 0,
+        item.totalSasaran,
+        item.pengunjungBayi || 0,
+        item.pengunjungBalita || 0,
+        item.pengunjungBumil || 0,
+        item.pengunjungBufus || 0,
+        item.pengunjungBusu || 0,
+        item.pengunjungRemaja || 0,
+        item.pengunjungDewasa || 0,
+        item.pengunjungLansia || 0,
+        item.totalPengunjung,
+        item.fotoUrl || ''
+      ];
+    });
+
+    const finalData = [header1, header2, ...dataForExport];
+    const worksheet = XLSX.utils.aoa_to_sheet(finalData);
+
+    worksheet['!merges'] = [
+      // Merge main headers vertically
+      { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } }, // Nama Posyandu
+      { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } }, // Tanggal Kegiatan
+      { s: { r: 0, c: 20 }, e: { r: 1, c: 20 } }, // Foto Kegiatan (Adjusted index)
+      // Merge group headers horizontally
+      { s: { r: 0, c: 2 }, e: { r: 0, c: 10 } }, // Jumlah sasaran
+      { s: { r: 0, c: 11 }, e: { r: 0, c: 19 } }, // Pengunjung
+    ];
+    
+    // Set column widths
+    worksheet["!cols"] = [
+        { wch: 30 }, { wch: 15 },
+        { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, // Sasaran
+        { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, // Pengunjung
+        { wch: 20 } // Foto
+    ];
+
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Data Kegiatan");
-    
-    XLSX.writeFile(workbook, "data_kegiatan_posyandu.xlsx");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Kegiatan");
+    XLSX.writeFile(workbook, "Data-Kegiatan-Posyandu.xlsx");
 
     toast({
       title: "Ekspor Berhasil",
@@ -280,28 +304,28 @@ export default function KegiatanPage() {
                     <div>
                         <h3 className="mb-4 text-lg font-medium">Jumlah Sasaran</h3>
                         <div className="grid grid-cols-2 gap-4">
-                            <FormField control={form.control} name="sasaranBalita" render={({ field }) => (<FormItem><FormLabel>Balita</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="sasaranBumil" render={({ field }) => (<FormItem><FormLabel>Bumil</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="sasaranRemaja" render={({ field }) => (<FormItem><FormLabel>Remaja</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="sasaranLansia" render={({ field }) => (<FormItem><FormLabel>Lansia</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="sasaranBufus" render={({ field }) => (<FormItem><FormLabel>Bufus</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="sasaranBusu" render={({ field }) => (<FormItem><FormLabel>Busu</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="sasaranBayi" render={({ field }) => (<FormItem><FormLabel>Bayi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="sasaranDewasa" render={({ field }) => (<FormItem><FormLabel>Dewasa</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="sasaranBayi" render={({ field }) => (<FormItem><FormLabel>Bayi</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="sasaranBalita" render={({ field }) => (<FormItem><FormLabel>Balita</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="sasaranBumil" render={({ field }) => (<FormItem><FormLabel>Bumil</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="sasaranBufus" render={({ field }) => (<FormItem><FormLabel>Bufus</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="sasaranBusu" render={({ field }) => (<FormItem><FormLabel>Busu</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="sasaranRemaja" render={({ field }) => (<FormItem><FormLabel>Remaja</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="sasaranDewasa" render={({ field }) => (<FormItem><FormLabel>Dewasa</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="sasaranLansia" render={({ field }) => (<FormItem><FormLabel>Lansia</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                         </div>
                     </div>
                      <Separator />
                      <div>
                         <h3 className="mb-4 text-lg font-medium">Pengunjung</h3>
                         <div className="grid grid-cols-2 gap-4">
-                            <FormField control={form.control} name="pengunjungBalita" render={({ field }) => (<FormItem><FormLabel>Balita</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="pengunjungBumil" render={({ field }) => (<FormItem><FormLabel>Bumil</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="pengunjungRemaja" render={({ field }) => (<FormItem><FormLabel>Remaja</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="pengunjungLansia" render={({ field }) => (<FormItem><FormLabel>Lansia</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="pengunjungBufus" render={({ field }) => (<FormItem><FormLabel>Bufus</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="pengunjungBusu" render={({ field }) => (<FormItem><FormLabel>Busu</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="pengunjungBayi" render={({ field }) => (<FormItem><FormLabel>Bayi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                            <FormField control={form.control} name="pengunjungDewasa" render={({ field }) => (<FormItem><FormLabel>Dewasa</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="pengunjungBayi" render={({ field }) => (<FormItem><FormLabel>Bayi</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="pengunjungBalita" render={({ field }) => (<FormItem><FormLabel>Balita</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="pengunjungBumil" render={({ field }) => (<FormItem><FormLabel>Bumil</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="pengunjungBufus" render={({ field }) => (<FormItem><FormLabel>Bufus</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="pengunjungBusu" render={({ field }) => (<FormItem><FormLabel>Busu</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="pengunjungRemaja" render={({ field }) => (<FormItem><FormLabel>Remaja</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="pengunjungDewasa" render={({ field }) => (<FormItem><FormLabel>Dewasa</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name="pengunjungLansia" render={({ field }) => (<FormItem><FormLabel>Lansia</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                         </div>
                     </div>
                      <Separator />
