@@ -156,7 +156,7 @@ export default function KegiatanPage() {
       return;
     }
 
-    const header1 = ['Nama Posyandu', 'Tanggal Kegiatan', 'Jumlah sasaran', '', '', '', '', '', '', '', 'Pengunjung', '', '', '', '', '', '', '', 'Foto Kegiatan'];
+    const header1 = ['Nama Posyandu', 'Tanggal Kegiatan', 'Jumlah sasaran', '', '', '', '', '', '', '', '', 'Pengunjung', '', '', '', '', '', '', '', '', 'Foto Kegiatan'];
     const header2 = ['', '', 'Bayi', 'Balita', 'Bumil', 'Bufus', 'Busu', 'Remaja', 'Dewasa', 'Lansia', 'Total', 'Bayi', 'Balita', 'Bumil', 'Bufus', 'Busu', 'Remaja', 'Dewasa', 'Lansia', 'Total', ''];
     
     const dataForExport = activityData.map(item => {
@@ -192,7 +192,7 @@ export default function KegiatanPage() {
       // Merge main headers vertically
       { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } }, // Nama Posyandu
       { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } }, // Tanggal Kegiatan
-      { s: { r: 0, c: 20 }, e: { r: 1, c: 20 } }, // Foto Kegiatan (Adjusted index)
+      { s: { r: 0, c: 20 }, e: { r: 1, c: 20 } }, // Foto Kegiatan
       // Merge group headers horizontally
       { s: { r: 0, c: 2 }, e: { r: 0, c: 10 } }, // Jumlah sasaran
       { s: { r: 0, c: 11 }, e: { r: 0, c: 19 } }, // Pengunjung
@@ -437,3 +437,5 @@ export default function KegiatanPage() {
     </>
   );
 }
+
+    
