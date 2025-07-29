@@ -84,6 +84,7 @@ export default function Home() {
     defaultValues: {
       posyanduName: "",
       fullName: "",
+      attendanceDate: new Date(),
     },
   });
 
@@ -101,7 +102,7 @@ export default function Home() {
     form.reset({
         posyanduName: "",
         fullName: "",
-        attendanceDate: undefined,
+        attendanceDate: new Date(),
     });
   }
 
