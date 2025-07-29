@@ -12,7 +12,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { Home, Users } from 'lucide-react';
+import { Activity, Home, Users } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Firebase Studio App',
@@ -59,6 +59,14 @@ export default function RootLayout({
                     <Link href="/kehadiran">
                       <Users />
                       Kehadiran
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link href="/kegiatan">
+                      <Activity />
+                      Kegiatan
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
