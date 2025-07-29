@@ -56,27 +56,13 @@ const attendanceSchema = z.object({
 
 type AttendanceFormValues = z.infer<typeof attendanceSchema>;
 
-interface AttendanceRecord extends AttendanceFormValues {
+interface AttendanceRecord {
   id: string;
   timestamp: string;
+  posyanduName: string;
+  fullName: string;
+  attendanceDate: string; // Changed to string to match ISO format from API
 }
-
-const initialData: AttendanceRecord[] = [
-  {
-    id: "1",
-    timestamp: new Date().toISOString(),
-    posyanduName: "Posyandu Melati 1",
-    fullName: "Ibu Budi",
-    attendanceDate: new Date(),
-  },
-  {
-    id: "2",
-    timestamp: new Date(Date.now() - 86400000).toISOString(),
-    posyanduName: "Posyandu Mawar 2",
-    fullName: "Anak Ani",
-    attendanceDate: new Date(Date.now() - 86400000),
-  },
-];
 
 export default function KehadiranPage() {
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
@@ -84,10 +70,27 @@ export default function KehadiranPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Simulate fetching data and prevent hydration issues
     setIsClient(true);
-    setAttendanceData(initialData);
+    fetchAttendances();
   }, []);
+
+  const fetchAttendances = async () => {
+    try {
+      const response = await fetch('/api/kehadiran');
+      if (!response.ok) {
+        throw new Error('Failed to fetch attendances');
+      }
+      const data: AttendanceRecord[] = await response.json();
+      setAttendanceData(data);
+    } catch (error) {
+      console.error("Error fetching attendances:", error);
+      toast({
+        variant: "destructive",
+        title: "Gagal Memuat Data",
+        description: "Terjadi kesalahan saat memuat data kehadiran.",
+      });
+    }
+  };
 
   const form = useForm<AttendanceFormValues>({
     resolver: zodResolver(attendanceSchema),
@@ -98,18 +101,44 @@ export default function KehadiranPage() {
     },
   });
 
-  function onSubmit(data: AttendanceFormValues) {
-    const newRecord: AttendanceRecord = {
-      id: new Date().getTime().toString(),
-      timestamp: new Date().toISOString(),
+  async function onSubmit(data: AttendanceFormValues) {
+    const payload = {
       ...data,
+      attendanceDate: data.attendanceDate.toISOString(), // Convert Date to ISO string
     };
-    setAttendanceData((prev) => [newRecord, ...prev]);
-    form.reset({
-        posyanduName: "",
-        fullName: "",
-        attendanceDate: new Date(),
-    });
+
+    try {
+      const response = await fetch('/api/kehadiran', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save attendance');
+      }
+
+      const newRecord: AttendanceRecord = await response.json();
+      setAttendanceData((prev) => [newRecord, ...prev]);
+      form.reset({
+          posyanduName: "",
+          fullName: "",
+          attendanceDate: new Date(),
+      });
+      toast({
+          title: "Sukses",
+          description: "Data kehadiran berhasil disimpan.",
+      });
+    } catch (error) {
+      console.error("Error saving attendance:", error);
+      toast({
+        variant: "destructive",
+        title: "Gagal Menyimpan Data",
+        description: "Terjadi kesalahan saat menyimpan data kehadiran.",
+      });
+    }
   }
 
   function handleExport() {

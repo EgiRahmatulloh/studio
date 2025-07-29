@@ -82,27 +82,31 @@ const activitySchema = z.object({
 
 type ActivityFormValues = z.infer<typeof activitySchema>;
 
-interface ActivityRecord extends ActivityFormValues {
+interface ActivityRecord {
   id: string;
   timestamp: string;
+  posyanduName: string;
+  activityDate: string; // Changed to string to match ISO format from API
+  sasaranBalita: number;
+  sasaranBumil: number;
+  sasaranRemaja: number;
+  sasaranLansia: number;
+  sasaranBufus: number;
+  sasaranBusu: number;
+  sasaranBayi: number;
+  sasaranDewasa: number;
+  pengunjungBalita: number;
+  pengunjungBumil: number;
+  pengunjungRemaja: number;
+  pengunjungLansia: number;
+  pengunjungBufus: number;
+  pengunjungBusu: number;
+  pengunjungBayi: number;
+  pengunjungDewasa: number;
   totalSasaran: number;
   totalPengunjung: number;
   fotoUrl?: string;
 }
-
-const initialData: ActivityRecord[] = [
-    {
-      id: "1",
-      timestamp: new Date().toISOString(),
-      posyanduName: "Posyandu Melati 1",
-      activityDate: new Date(),
-      sasaranBalita: 10, sasaranBumil: 2, sasaranRemaja: 5, sasaranLansia: 1, sasaranBufus: 1, sasaranBusu: 1, sasaranBayi: 3, sasaranDewasa: 20,
-      pengunjungBalita: 8, pengunjungBumil: 2, pengunjungRemaja: 3, pengunjungLansia: 1, pengunjungBufus: 1, pengunjungBusu: 1, pengunjungBayi: 3, pengunjungDewasa: 15,
-      totalSasaran: 43,
-      totalPengunjung: 34,
-      fotoUrl: "https://docs.google.com/document/d/12345/edit",
-    },
-];
 
 export default function KegiatanPage() {
   const [activityData, setActivityData] = useState<ActivityRecord[]>([]);
@@ -111,8 +115,26 @@ export default function KegiatanPage() {
 
   useEffect(() => {
     setIsClient(true);
-    setActivityData(initialData);
+    fetchActivities();
   }, []);
+
+  const fetchActivities = async () => {
+    try {
+      const response = await fetch('/api/kegiatan');
+      if (!response.ok) {
+        throw new Error('Failed to fetch activities');
+      }
+      const data: ActivityRecord[] = await response.json();
+      setActivityData(data);
+    } catch (error) {
+      console.error("Error fetching activities:", error);
+      toast({
+        variant: "destructive",
+        title: "Gagal Memuat Data",
+        description: "Terjadi kesalahan saat memuat data kegiatan.",
+      });
+    }
+  };
 
   const form = useForm<ActivityFormValues>({
     resolver: zodResolver(activitySchema),
@@ -125,25 +147,46 @@ export default function KegiatanPage() {
     },
   });
 
-  function onSubmit(data: ActivityFormValues) {
+  async function onSubmit(data: ActivityFormValues) {
     const totalSasaran = Object.keys(data).filter(k => k.startsWith('sasaran')).reduce((acc, key) => acc + (data[key as keyof ActivityFormValues] as number || 0), 0);
     const totalPengunjung = Object.keys(data).filter(k => k.startsWith('pengunjung')).reduce((acc, key) => acc + (data[key as keyof ActivityFormValues] as number || 0), 0);
     
-    const newRecord: ActivityRecord = {
-      id: new Date().getTime().toString(),
-      timestamp: new Date().toISOString(),
+    const payload = {
       ...data,
       totalSasaran,
       totalPengunjung,
       fotoUrl: data.kegiatanFoto,
+      activityDate: data.activityDate.toISOString(), // Convert Date to ISO string
     };
-    
-    setActivityData((prev) => [newRecord, ...prev]);
-    form.reset();
-    toast({
-        title: "Sukses",
-        description: "Data kegiatan berhasil disimpan.",
-    });
+
+    try {
+      const response = await fetch('/api/kegiatan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save activity');
+      }
+
+      const newRecord: ActivityRecord = await response.json();
+      setActivityData((prev) => [newRecord, ...prev]);
+      form.reset();
+      toast({
+          title: "Sukses",
+          description: "Data kegiatan berhasil disimpan.",
+      });
+    } catch (error) {
+      console.error("Error saving activity:", error);
+      toast({
+        variant: "destructive",
+        title: "Gagal Menyimpan Data",
+        description: "Terjadi kesalahan saat menyimpan data kegiatan.",
+      });
+    }
   }
 
   function handleExport() {
@@ -420,5 +463,3 @@ export default function KegiatanPage() {
     </>
   );
 }
-
-    
