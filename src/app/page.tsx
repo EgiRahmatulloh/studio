@@ -47,8 +47,10 @@ export default function DashboardPage() {
       }
     }
 
-    fetchData();
-  }, []);
+    if(user) {
+        fetchData();
+    }
+  }, [user]);
 
   if (authLoading) {
     return (
