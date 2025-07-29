@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Calendar as CalendarIcon, Download, Upload } from "lucide-react";
+import { Calendar as CalendarIcon, Download, Link as LinkIcon } from "lucide-react";
 import * as XLSX from "xlsx";
 
 import { cn } from "@/lib/utils";
@@ -48,6 +48,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Image from 'next/image';
+import Link from 'next/link';
 
 
 const numberSchema = z.preprocess(
@@ -76,7 +77,7 @@ const activitySchema = z.object({
   pengunjungBusu: numberSchema,
   pengunjungBayi: numberSchema,
   pengunjungDewasa: numberSchema,
-  kegiatanFoto: z.any().optional(),
+  kegiatanFoto: z.string().url({ message: "Harap masukkan URL Google Drive yang valid." }).optional().or(z.literal('')),
 });
 
 type ActivityFormValues = z.infer<typeof activitySchema>;
@@ -99,14 +100,13 @@ const initialData: ActivityRecord[] = [
       pengunjungBalita: 8, pengunjungBumil: 2, pengunjungRemaja: 3, pengunjungLansia: 1, pengunjungBufus: 1, pengunjungBusu: 1, pengunjungBayi: 3, pengunjungDewasa: 15,
       totalSasaran: 43,
       totalPengunjung: 34,
-      fotoUrl: "https://placehold.co/600x400.png",
+      fotoUrl: "https://docs.google.com/document/d/12345/edit",
     },
 ];
 
 export default function KegiatanPage() {
   const [activityData, setActivityData] = useState<ActivityRecord[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -121,6 +121,7 @@ export default function KegiatanPage() {
         activityDate: new Date(),
         sasaranBalita: 0, sasaranBumil: 0, sasaranRemaja: 0, sasaranLansia: 0, sasaranBufus: 0, sasaranBusu: 0, sasaranBayi: 0, sasaranDewasa: 0,
         pengunjungBalita: 0, pengunjungBumil: 0, pengunjungRemaja: 0, pengunjungLansia: 0, pengunjungBufus: 0, pengunjungBusu: 0, pengunjungBayi: 0, pengunjungDewasa: 0,
+        kegiatanFoto: "",
     },
   });
 
@@ -134,12 +135,11 @@ export default function KegiatanPage() {
       ...data,
       totalSasaran,
       totalPengunjung,
-      fotoUrl: previewImage || undefined,
+      fotoUrl: data.kegiatanFoto,
     };
     
     setActivityData((prev) => [newRecord, ...prev]);
     form.reset();
-    setPreviewImage(null);
     toast({
         title: "Sukses",
         description: "Data kegiatan berhasil disimpan.",
@@ -203,7 +203,7 @@ export default function KegiatanPage() {
         { wch: 30 }, { wch: 15 },
         { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, // Sasaran
         { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, // Pengunjung
-        { wch: 20 } // Foto
+        { wch: 30 } // Foto
     ];
 
     const workbook = XLSX.utils.book_new();
@@ -334,36 +334,11 @@ export default function KegiatanPage() {
                         name="kegiatanFoto"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Foto Kegiatan</FormLabel>
+                            <FormLabel>Link Foto Kegiatan (Google Drive)</FormLabel>
                             <FormControl>
-                                <div className="flex items-center gap-4">
-                                <Input
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    id="file-upload"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                            const reader = new FileReader();
-                                            reader.onloadend = () => {
-                                                setPreviewImage(reader.result as string);
-                                                field.onChange(reader.result as string);
-                                            };
-                                            reader.readAsDataURL(file);
-                                        }
-                                    }}
-                                />
-                                 <label htmlFor="file-upload" className="cursor-pointer">
-                                    <Button type="button" variant="outline">
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        Pilih Foto
-                                    </Button>
-                                </label>
-                                {previewImage && <Image src={previewImage} alt="Preview" width={80} height={80} className="rounded-md object-cover" />}
-                                </div>
+                               <Input placeholder="https://docs.google.com/..." {...field} />
                             </FormControl>
-                            <FormDescription>Unggah foto dokumentasi kegiatan.</FormDescription>
+                            <FormDescription>Salin dan tempel tautan dari Google Drive.</FormDescription>
                             <FormMessage />
                             </FormItem>
                         )}
@@ -414,7 +389,15 @@ export default function KegiatanPage() {
                             <TableCell className="text-center">{record.totalSasaran}</TableCell>
                              <TableCell className="text-center">{record.totalPengunjung}</TableCell>
                             <TableCell>
-                                {record.fotoUrl && <Image src={record.fotoUrl} alt="Foto Kegiatan" width={60} height={60} className="rounded-md object-cover" data-ai-hint="activity event" />}
+                                {record.fotoUrl ? (
+                                    <Button asChild variant="outline" size="sm">
+                                        <Link href={record.fotoUrl} target="_blank" rel="noopener noreferrer">
+                                            <LinkIcon className="mr-2" /> Buka
+                                        </Link>
+                                    </Button>
+                                ) : (
+                                    <span>-</span>
+                                )}
                             </TableCell>
                           </TableRow>
                         ))
