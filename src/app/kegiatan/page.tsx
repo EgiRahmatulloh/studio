@@ -65,7 +65,7 @@ const activitySchema = z.object({
   sasaranBumil: numberSchema,
   sasaranRemaja: numberSchema,
   sasaranLansia: numberSchema,
-  sasaranBufus: numberSchema,
+  sasaranBufas: numberSchema,
   sasaranBusu: numberSchema,
   sasaranBayi: numberSchema,
   sasaranDewasa: numberSchema,
@@ -73,7 +73,7 @@ const activitySchema = z.object({
   pengunjungBumil: numberSchema,
   pengunjungRemaja: numberSchema,
   pengunjungLansia: numberSchema,
-  pengunjungBufus: numberSchema,
+  pengunjungBufas: numberSchema,
   pengunjungBusu: numberSchema,
   pengunjungBayi: numberSchema,
   pengunjungDewasa: numberSchema,
@@ -91,7 +91,7 @@ interface ActivityRecord {
   sasaranBumil: number;
   sasaranRemaja: number;
   sasaranLansia: number;
-  sasaranBufus: number;
+  sasaranBufas: number;
   sasaranBusu: number;
   sasaranBayi: number;
   sasaranDewasa: number;
@@ -99,7 +99,7 @@ interface ActivityRecord {
   pengunjungBumil: number;
   pengunjungRemaja: number;
   pengunjungLansia: number;
-  pengunjungBufus: number;
+  pengunjungBufas: number;
   pengunjungBusu: number;
   pengunjungBayi: number;
   pengunjungDewasa: number;
@@ -154,8 +154,8 @@ export default function KegiatanPage() {
     defaultValues: {
         posyanduName: "",
         activityDate: new Date(),
-        sasaranBalita: 0, sasaranBumil: 0, sasaranRemaja: 0, sasaranLansia: 0, sasaranBufus: 0, sasaranBusu: 0, sasaranBayi: 0, sasaranDewasa: 0,
-        pengunjungBalita: 0, pengunjungBumil: 0, pengunjungRemaja: 0, pengunjungLansia: 0, pengunjungBufus: 0, pengunjungBusu: 0, pengunjungBayi: 0, pengunjungDewasa: 0,
+        sasaranBalita: 0, sasaranBumil: 0, sasaranRemaja: 0, sasaranLansia: 0, sasaranBufas: 0, sasaranBusu: 0, sasaranBayi: 0, sasaranDewasa: 0,
+        pengunjungBalita: 0, pengunjungBumil: 0, pengunjungRemaja: 0, pengunjungLansia: 0, pengunjungBufas: 0, pengunjungBusu: 0, pengunjungBayi: 0, pengunjungDewasa: 0,
         kegiatanFoto: "",
     },
   });
@@ -215,7 +215,7 @@ export default function KegiatanPage() {
     }
 
     const header1 = ['Nama Posyandu', 'Tanggal Kegiatan', 'Jumlah sasaran', '', '', '', '', '', '', '', '', 'Pengunjung', '', '', '', '', '', '', '', '', 'Foto Kegiatan'];
-    const header2 = ['', '', 'Bayi', 'Balita', 'Bumil', 'Bufus', 'Busu', 'Remaja', 'Dewasa', 'Lansia', 'Total', 'Bayi', 'Balita', 'Bumil', 'Bufus', 'Busu', 'Remaja', 'Dewasa', 'Lansia', 'Total', ''];
+    const header2 = ['', '', 'Bayi', 'Balita', 'Bumil', 'Bufas', 'Busu', 'Remaja', 'Dewasa', 'Lansia', 'Total', 'Bayi', 'Balita', 'Bumil', 'Bufas', 'Busu', 'Remaja', 'Dewasa', 'Lansia', 'Total', ''];
     
     const dataForExport = activityData.map(item => {
       return [
@@ -224,7 +224,7 @@ export default function KegiatanPage() {
         item.sasaranBayi || 0,
         item.sasaranBalita || 0,
         item.sasaranBumil || 0,
-        item.sasaranBufus || 0,
+        item.sasaranBufas || 0,
         item.sasaranBusu || 0,
         item.sasaranRemaja || 0,
         item.sasaranDewasa || 0,
@@ -233,7 +233,7 @@ export default function KegiatanPage() {
         item.pengunjungBayi || 0,
         item.pengunjungBalita || 0,
         item.pengunjungBumil || 0,
-        item.pengunjungBufus || 0,
+        item.pengunjungBufas || 0,
         item.pengunjungBusu || 0,
         item.pengunjungRemaja || 0,
         item.pengunjungDewasa || 0,
@@ -377,7 +377,7 @@ export default function KegiatanPage() {
                               <FormField control={form.control} name="sasaranBayi" render={({ field }) => (<FormItem><FormLabel>Bayi</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                               <FormField control={form.control} name="sasaranBalita" render={({ field }) => (<FormItem><FormLabel>Balita</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                               <FormField control={form.control} name="sasaranBumil" render={({ field }) => (<FormItem><FormLabel>Bumil</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                              <FormField control={form.control} name="sasaranBufus" render={({ field }) => (<FormItem><FormLabel>Bufus</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                              <FormField control={form.control} name="sasaranBufas" render={({ field }) => (<FormItem><FormLabel>Bufas</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                               <FormField control={form.control} name="sasaranBusu" render={({ field }) => (<FormItem><FormLabel>Busu</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                               <FormField control={form.control} name="sasaranRemaja" render={({ field }) => (<FormItem><FormLabel>Remaja</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                               <FormField control={form.control} name="sasaranDewasa" render={({ field }) => (<FormItem><FormLabel>Dewasa</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
@@ -391,7 +391,7 @@ export default function KegiatanPage() {
                               <FormField control={form.control} name="pengunjungBayi" render={({ field }) => (<FormItem><FormLabel>Bayi</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                               <FormField control={form.control} name="pengunjungBalita" render={({ field }) => (<FormItem><FormLabel>Balita</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                               <FormField control={form.control} name="pengunjungBumil" render={({ field }) => (<FormItem><FormLabel>Bumil</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                              <FormField control={form.control} name="pengunjungBufus" render={({ field }) => (<FormItem><FormLabel>Bufus</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
+                              <FormField control={form.control} name="pengunjungBufas" render={({ field }) => (<FormItem><FormLabel>Bufas</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                               <FormField control={form.control} name="pengunjungBusu" render={({ field }) => (<FormItem><FormLabel>Busu</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                               <FormField control={form.control} name="pengunjungRemaja" render={({ field }) => (<FormItem><FormLabel>Remaja</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
                               <FormField control={form.control} name="pengunjungDewasa" render={({ field }) => (<FormItem><FormLabel>Dewasa</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
