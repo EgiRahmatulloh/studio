@@ -8,6 +8,7 @@ import * as z from "zod";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Calendar as CalendarIcon, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -78,12 +79,14 @@ const initialData: AttendanceRecord[] = [
 ];
 
 export default function Home() {
-  const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>(initialData);
+  const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    // Simulate fetching data and prevent hydration issues
     setIsClient(true);
+    setAttendanceData(initialData);
   }, []);
 
   const form = useForm<AttendanceFormValues>({
@@ -119,31 +122,22 @@ export default function Home() {
       return;
     }
 
-    const headers = ["Timestamp", "Nama Posyandu", "Nama Lengkap", "Tanggal Kehadiran"];
-    const csvRows = attendanceData.map((row) =>
-      [
-        `"${new Date(row.timestamp).toLocaleString("id-ID")}"`,
-        `"${row.posyanduName}"`,
-        `"${row.fullName}"`,
-        `"${format(row.attendanceDate, "yyyy-MM-dd", { locale: id })}"`,
-      ].join(",")
-    );
-
-    const csvContent = [headers.join(","), ...csvRows].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", "data_kehadiran_posyandu.csv");
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const dataToExport = attendanceData.map((row) => ({
+        "Timestamp": new Date(row.timestamp).toLocaleString("id-ID"),
+        "Nama Posyandu": row.posyanduName,
+        "Nama Lengkap": row.fullName,
+        "Tanggal Kehadiran": format(row.attendanceDate, "yyyy-MM-dd", { locale: id }),
+    }));
     
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data Kehadiran");
+    
+    XLSX.writeFile(workbook, "data_kehadiran_posyandu.xlsx");
+
     toast({
       title: "Ekspor Berhasil",
-      description: "Data kehadiran telah diunduh sebagai CSV.",
+      description: "Data kehadiran telah diunduh sebagai XLSX.",
     });
   }
 
@@ -162,7 +156,7 @@ export default function Home() {
             </div>
             <Button onClick={handleExport}>
               <Download className="mr-2 h-4 w-4" />
-              Export ke CSV
+              Export ke XLSX
             </Button>
           </header>
 
