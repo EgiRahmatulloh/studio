@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, AuthUser } from './auth';
 
-type HandlerWithParams = (
+type HandlerWithParams<T> = (
   req: NextRequest,
   user: AuthUser,
-  context: { params: any }
-) => Promise<NextResponse>;
+  context: { params: T }
+) => Promise<NextResponse> | NextResponse;
 
-export function withAuth(handler: HandlerWithParams | ((req: NextRequest, user: AuthUser) => Promise<NextResponse>)) {
-  return async (req: NextRequest, context: { params: any }) => {
+type HandlerWithoutParams = (
+    req: NextRequest,
+    user: AuthUser,
+) => Promise<NextResponse> | NextResponse;
+
+type ContextWithParams<T> = { params: T };
+
+export function withAuth<T = any>(handler: HandlerWithParams<T> | HandlerWithoutParams) {
+  return async (req: NextRequest, context: ContextWithParams<T>) => {
     try {
       const token = req.headers.get('authorization')?.replace('Bearer ', '') || 
                    req.cookies.get('auth-token')?.value;
@@ -22,28 +29,28 @@ export function withAuth(handler: HandlerWithParams | ((req: NextRequest, user: 
         return NextResponse.json({ error: 'Token tidak valid' }, { status: 401 });
       }
       
-      // Pass both req, user, and context (which contains params) to the handler
-      return (handler as HandlerWithParams)(req, user, context);
+      return (handler as HandlerWithParams<T>)(req, user, context);
     } catch (error) {
+        console.error("Middleware error:", error);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
   };
 }
 
-export function withAdminAuth(handler: HandlerWithParams) {
-  return withAuth(async (req: NextRequest, user: AuthUser, context: { params: any }) => {
+export function withAdminAuth<T = any>(handler: HandlerWithParams<T> | HandlerWithoutParams) {
+  return withAuth(async (req: NextRequest, user: AuthUser, context: ContextWithParams<T>) => {
     if (user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Akses ditolak. Hanya admin yang diizinkan.' }, { status: 403 });
     }
-    return handler(req, user, context);
+    return (handler as HandlerWithParams<T>)(req, user, context);
   });
 }
 
-export function withPermission(permission: string, handler: HandlerWithParams) {
-  return withAuth(async (req: NextRequest, user: AuthUser, context: { params: any }) => {
+export function withPermission<T = any>(permission: string, handler: HandlerWithParams<T> | HandlerWithoutParams) {
+  return withAuth(async (req: NextRequest, user: AuthUser, context: ContextWithParams<T>) => {
     if (user.role !== 'ADMIN' && !user.permissions.includes(permission)) {
       return NextResponse.json({ error: `Akses ditolak. Diperlukan izin: ${permission}` }, { status: 403 });
     }
-    return handler(req, user, context);
+    return (handler as HandlerWithParams<T>)(req, user, context);
   });
 }
