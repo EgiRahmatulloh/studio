@@ -1,9 +1,11 @@
-import { NextResponse } from 'next/server';
+
+import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '../../../../src/generated/prisma';
+import { withPermission } from '@/lib/middleware';
 
 const prisma = new PrismaClient();
 
-export async function GET() {
+export const GET = withPermission('view_kegiatan', async () => {
   try {
     const activities = await prisma.activityRecord.findMany({
       orderBy: {
@@ -15,9 +17,9 @@ export async function GET() {
     console.error('Error fetching activities:', error);
     return NextResponse.json({ error: 'Failed to fetch activities' }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withPermission('create_kegiatan', async (request: NextRequest) => {
   try {
     const data = await request.json();
     const newActivity = await prisma.activityRecord.create({
@@ -50,4 +52,4 @@ export async function POST(request: Request) {
     console.error('Error creating activity:', error);
     return NextResponse.json({ error: 'Failed to create activity' }, { status: 500 });
   }
-}
+});

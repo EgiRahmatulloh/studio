@@ -1,9 +1,11 @@
-import { NextResponse } from 'next/server';
+
+import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '../../../../src/generated/prisma';
+import { withPermission } from '@/lib/middleware';
 
 const prisma = new PrismaClient();
 
-export async function GET() {
+export const GET = withPermission('view_kehadiran', async () => {
   try {
     const attendances = await prisma.attendanceRecord.findMany({
       orderBy: {
@@ -15,11 +17,11 @@ export async function GET() {
     console.error('Error fetching attendances:', error);
     return NextResponse.json({ error: 'Failed to fetch attendances' }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withPermission('create_kehadiran', async (req: NextRequest) => {
   try {
-    const data = await request.json();
+    const data = await req.json();
     const newAttendance = await prisma.attendanceRecord.create({
       data: {
         posyanduName: data.posyanduName,
@@ -32,4 +34,4 @@ export async function POST(request: Request) {
     console.error('Error creating attendance:', error);
     return NextResponse.json({ error: 'Failed to create attendance' }, { status: 500 });
   }
-}
+});

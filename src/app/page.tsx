@@ -5,13 +5,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Users, Activity, User, Shield } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { user, loading: authLoading, isAdmin, hasPermission } = useAuth();
+  const { user, loading: authLoading, hasPermission } = useAuth();
   const router = useRouter();
   const [totalKehadiran, setTotalKehadiran] = useState(0);
   const [totalKegiatan, setTotalKegiatan] = useState(0);
@@ -25,18 +25,28 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function fetchData() {
+      if (!user) return;
+      setLoading(true);
       try {
-        const [kehadiranRes, kegiatanRes] = await Promise.all([
-          fetch('/api/kehadiran'),
-          fetch('/api/kegiatan'),
-        ]);
+        const token = localStorage.getItem('auth-token');
+        const headers = { 'Authorization': `Bearer ${token}` };
 
-        if (kehadiranRes.ok) {
+        const promises = [];
+        if(hasPermission('view_kehadiran')) {
+            promises.push(fetch('/api/kehadiran', { headers }));
+        }
+        if(hasPermission('view_kegiatan')) {
+            promises.push(fetch('/api/kegiatan', { headers }));
+        }
+
+        const [kehadiranRes, kegiatanRes] = await Promise.all(promises);
+
+        if (kehadiranRes && kehadiranRes.ok) {
           const kehadiranData = await kehadiranRes.json();
           setTotalKehadiran(kehadiranData.length);
         }
 
-        if (kegiatanRes.ok) {
+        if (kegiatanRes && kegiatanRes.ok) {
           const kegiatanData = await kegiatanRes.json();
           setTotalKegiatan(kegiatanData.length);
         }
@@ -46,13 +56,10 @@ export default function DashboardPage() {
         setLoading(false);
       }
     }
+    fetchData();
+  }, [user, hasPermission]);
 
-    if(user) {
-        fetchData();
-    }
-  }, [user]);
-
-  if (authLoading) {
+  if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -61,10 +68,6 @@ export default function DashboardPage() {
         </div>
       </div>
     );
-  }
-
-  if (!user) {
-    return null;
   }
 
   return (
@@ -114,29 +117,32 @@ export default function DashboardPage() {
       </Card>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Kehadiran
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-                 <div className="h-8 w-1/2 animate-pulse rounded-md bg-muted" />
-            ) : (
-                <div className="text-2xl font-bold">{totalKehadiran}</div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Total seluruh catatan kehadiran kader.
-            </p>
-          </CardContent>
-           <CardContent className="flex flex-col gap-4 pt-4">
-             <Button asChild size="sm">
-               <Link href="/kehadiran">Lihat Kehadiran</Link>
-             </Button>
-           </CardContent>
-        </Card>
+       {hasPermission('view_kehadiran') && (
+            <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                Total Kehadiran
+                </CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                {loading ? (
+                    <div className="h-8 w-1/2 animate-pulse rounded-md bg-muted" />
+                ) : (
+                    <div className="text-2xl font-bold">{totalKehadiran}</div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                Total seluruh catatan kehadiran kader.
+                </p>
+            </CardContent>
+            <CardFooter>
+                <Button asChild size="sm" className="w-full">
+                <Link href="/kehadiran">Lihat Kehadiran</Link>
+                </Button>
+            </CardFooter>
+            </Card>
+       )}
+       {hasPermission('view_kegiatan') && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Kegiatan</CardTitle>
@@ -152,12 +158,13 @@ export default function DashboardPage() {
               Total seluruh laporan kegiatan posyandu.
             </p>
           </CardContent>
-           <CardContent className="flex flex-col gap-4 pt-4">
-             <Button asChild size="sm">
+           <CardFooter>
+             <Button asChild size="sm" className="w-full">
                <Link href="/kegiatan">Lihat Kegiatan</Link>
              </Button>
-           </CardContent>
+           </CardFooter>
         </Card>
+       )}
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
@@ -47,7 +47,6 @@ import {
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
-import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -113,30 +112,39 @@ export default function KegiatanPage() {
   const [activityData, setActivityData] = useState<ActivityRecord[]>([]);
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
   
   const canCreate = hasPermission('create_kegiatan');
   const canExport = hasPermission('export_data');
+  const canView = hasPermission('view_kegiatan');
 
   useEffect(() => {
     setIsClient(true);
-    fetchActivities();
-  }, []);
+    if(canView){
+        fetchActivities();
+    }
+  }, [user, canView]);
 
   const fetchActivities = async () => {
     try {
-      const response = await fetch('/api/kegiatan');
+      const token = localStorage.getItem('auth-token');
+      const response = await fetch('/api/kegiatan', {
+          headers: {
+              'Authorization': `Bearer ${token}`
+          }
+      });
       if (!response.ok) {
-        throw new Error('Failed to fetch activities');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch activities');
       }
       const data: ActivityRecord[] = await response.json();
       setActivityData(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching activities:", error);
       toast({
         variant: "destructive",
         title: "Gagal Memuat Data",
-        description: "Terjadi kesalahan saat memuat data kegiatan.",
+        description: error.message || "Terjadi kesalahan saat memuat data kegiatan.",
       });
     }
   };
@@ -165,10 +173,12 @@ export default function KegiatanPage() {
     };
 
     try {
+      const token = localStorage.getItem('auth-token');
       const response = await fetch('/api/kegiatan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(payload),
       });
@@ -210,7 +220,7 @@ export default function KegiatanPage() {
     const dataForExport = activityData.map(item => {
       return [
         item.posyanduName,
-        format(item.activityDate, 'yyyy-MM-dd'),
+        format(new Date(item.activityDate), 'yyyy-MM-dd'),
         item.sasaranBayi || 0,
         item.sasaranBalita || 0,
         item.sasaranBumil || 0,
@@ -262,6 +272,15 @@ export default function KegiatanPage() {
       title: "Ekspor Berhasil",
       description: "Data kegiatan telah diunduh sebagai XLSX.",
     });
+  }
+
+  if (!canView) {
+      return (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+              <h1 className="text-2xl font-bold">Akses Ditolak</h1>
+              <p className="text-muted-foreground">Anda tidak memiliki izin untuk melihat halaman ini.</p>
+          </div>
+      )
   }
 
   return (
@@ -387,7 +406,7 @@ export default function KegiatanPage() {
                               <FormItem>
                               <FormLabel>Link Foto Kegiatan (Google Drive)</FormLabel>
                               <FormControl>
-                                <Input placeholder="https://docs.google.com/..." {...field} />
+                                <Input placeholder="https://docs.google.com/..." {...field} value={field.value || ''} />
                               </FormControl>
                               <FormDescription>Salin dan tempel tautan dari Google Drive.</FormDescription>
                               <FormMessage />
@@ -436,7 +455,7 @@ export default function KegiatanPage() {
                             </TableCell>
                             <TableCell>{record.posyanduName}</TableCell>
                             <TableCell>
-                              {format(record.activityDate, "PPP", { locale: id })}
+                              {format(new Date(record.activityDate), "PPP", { locale: id })}
                             </TableCell>
                             <TableCell className="text-center">{record.totalSasaran}</TableCell>
                              <TableCell className="text-center">{record.totalPengunjung}</TableCell>
@@ -444,7 +463,7 @@ export default function KegiatanPage() {
                                 {record.fotoUrl ? (
                                     <Button asChild variant="outline" size="sm">
                                         <Link href={record.fotoUrl} target="_blank" rel="noopener noreferrer">
-                                            <LinkIcon className="mr-2" /> Buka
+                                            <LinkIcon className="mr-2 h-4 w-4" /> Buka
                                         </Link>
                                     </Button>
                                 ) : (
@@ -472,5 +491,3 @@ export default function KegiatanPage() {
     </>
   );
 }
-
-    

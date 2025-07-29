@@ -69,30 +69,39 @@ export default function KehadiranPage() {
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
   
   const canCreate = hasPermission('create_kehadiran');
   const canExport = hasPermission('export_data');
+  const canView = hasPermission('view_kehadiran');
 
   useEffect(() => {
     setIsClient(true);
-    fetchAttendances();
-  }, []);
+    if(canView){
+        fetchAttendances();
+    }
+  }, [user, canView]);
 
   const fetchAttendances = async () => {
     try {
-      const response = await fetch('/api/kehadiran');
+      const token = localStorage.getItem('auth-token');
+      const response = await fetch('/api/kehadiran', {
+          headers: {
+              'Authorization': `Bearer ${token}`
+          }
+      });
       if (!response.ok) {
-        throw new Error('Failed to fetch attendances');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch attendances');
       }
       const data: AttendanceRecord[] = await response.json();
       setAttendanceData(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching attendances:", error);
       toast({
         variant: "destructive",
         title: "Gagal Memuat Data",
-        description: "Terjadi kesalahan saat memuat data kehadiran.",
+        description: error.message || "Terjadi kesalahan saat memuat data kehadiran.",
       });
     }
   };
@@ -113,10 +122,12 @@ export default function KehadiranPage() {
     };
 
     try {
+      const token = localStorage.getItem('auth-token');
       const response = await fetch('/api/kehadiran', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(payload),
       });
@@ -173,6 +184,15 @@ export default function KehadiranPage() {
       title: "Ekspor Berhasil",
       description: "Data kehadiran telah diunduh sebagai XLSX.",
     });
+  }
+
+  if (!canView) {
+      return (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+              <h1 className="text-2xl font-bold">Akses Ditolak</h1>
+              <p className="text-muted-foreground">Anda tidak memiliki izin untuk melihat halaman ini.</p>
+          </div>
+      )
   }
 
   return (
@@ -332,7 +352,7 @@ export default function KehadiranPage() {
                             <TableCell>{record.posyanduName}</TableCell>
                             <TableCell>{record.fullName}</TableCell>
                             <TableCell>
-                              {format(record.attendanceDate, "PPP", {
+                              {format(new Date(record.attendanceDate), "PPP", {
                                 locale: id,
                               })}
                             </TableCell>
@@ -360,5 +380,3 @@ export default function KehadiranPage() {
     </>
   );
 }
-
-    
