@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user = await createUser(email, password, role || 'USER');
+    const user = await createUser({ email, password, role: role || 'USER' });
     const token = generateToken(user);
 
     const response = NextResponse.json({
