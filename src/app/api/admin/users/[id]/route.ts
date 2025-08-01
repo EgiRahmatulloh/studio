@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAdminAuth } from '@/lib/middleware';
-import { getUserById, updateUserPermissions, deleteUser, AuthUser } from '@/lib/auth';
+import { getUserById, updateUser, deleteUser, AuthUser } from '@/lib/auth';
 
 type RouteContext = {
     params: {
@@ -30,10 +30,10 @@ export const GET = withAdminAuth(async (req: NextRequest, user: AuthUser, contex
     }
 });
 
-// PUT - Update permissions user
+// PUT - Update user (permissions and posyanduName)
 export const PUT = withAdminAuth(async (req: NextRequest, user: AuthUser, context: RouteContext) => {
     try {
-      const { permissions } = await req.json();
+      const { permissions, posyanduName } = await req.json();
 
       if (!Array.isArray(permissions)) {
         return NextResponse.json(
@@ -42,15 +42,15 @@ export const PUT = withAdminAuth(async (req: NextRequest, user: AuthUser, contex
         );
       }
 
-      await updateUserPermissions(context.params.id, permissions);
+      await updateUser(context.params.id, { permissions, posyanduName });
       const updatedUser = await getUserById(context.params.id);
 
       return NextResponse.json({
-        message: 'Permissions user berhasil diupdate',
+        message: 'User berhasil diupdate',
         user: updatedUser,
       });
     } catch (error) {
-      console.error('Update user permissions error:', error);
+      console.error('Update user error:', error);
       return NextResponse.json(
         { error: 'Terjadi kesalahan server' },
         { status: 500 }

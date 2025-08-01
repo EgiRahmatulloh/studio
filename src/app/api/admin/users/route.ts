@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAdminAuth } from '@/lib/middleware';
+import { withAdminAuth, withSuperAdminAuth } from '@/lib/middleware';
 import { getAllUsers, createUser, AuthUser } from '@/lib/auth';
 
-// GET - Mendapatkan semua user (hanya admin)
+// GET - Mendapatkan semua user (hanya admin/superadmin)
 export const GET = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
   try {
     const users = await getAllUsers();
@@ -16,10 +16,10 @@ export const GET = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
   }
 });
 
-// POST - Membuat user baru (hanya admin)
+// POST - Membuat user baru (hanya admin/superadmin)
 export const POST = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
   try {
-    const { email, password, role } = await req.json();
+    const { email, password, role, posyanduName } = await req.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -35,7 +35,20 @@ export const POST = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
       );
     }
 
-    const newUser = await createUser(email, password, role || 'USER');
+    // Hanya SUPER_ADMIN yang boleh membuat ADMIN
+    if (role === 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+        return NextResponse.json(
+            { error: 'Hanya Super Admin yang bisa membuat akun Admin.' },
+            { status: 403 }
+        );
+    }
+
+    const newUser = await createUser({
+        email, 
+        password, 
+        role: role || 'USER',
+        posyanduName
+    });
 
     return NextResponse.json({
       message: 'User berhasil dibuat',
@@ -44,6 +57,7 @@ export const POST = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
         email: newUser.email,
         role: newUser.role,
         permissions: newUser.permissions,
+        posyanduName: newUser.posyanduName,
       },
     });
   } catch (error: any) {
