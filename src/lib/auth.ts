@@ -194,9 +194,9 @@ export async function getAllPermissions(): Promise<Permission[]> {
 }
 
 export function hasPermission(user: AuthUser, permissionName: string): boolean {
-  return user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || user.permissions.includes(permissionName);
+  return user.role === 'ADMIN' || user.permissions.includes(permissionName);
 }
 
 export function isAdmin(user: AuthUser): boolean {
-  return user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+  return user.role === 'ADMIN';
 }

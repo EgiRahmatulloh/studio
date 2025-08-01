@@ -34,16 +34,16 @@ async function main() {
     }
   }
 
-  // Buat super admin default
-  console.log('👤 Creating default super admin user...');
+  // Buat admin default
+  console.log('👤 Creating default admin user...');
   try {
-    const adminUser = await createUser({ email: 'admin@posyandu.com', password: 'admin123', role: 'SUPER_ADMIN', posyanduName: 'Kantor Pusat' });
-    console.log('✅ Created super admin user:', adminUser.email);
+    const adminUser = await createUser({ email: 'admin@posyandu.com', password: 'admin123', role: 'ADMIN', posyanduName: 'Kantor Pusat' });
+    console.log('✅ Created admin user:', adminUser.email);
   } catch (error: any) {
     if (error.code === 'P2002') {
-      console.log('⚠️  Super admin user already exists');
+      console.log('⚠️  Admin user already exists');
     } else {
-      console.error('❌ Error creating super admin user:', error);
+      console.error('❌ Error creating admin user:', error);
     }
   }
 
@@ -66,7 +66,7 @@ async function main() {
 
   console.log('🎉 Seeding completed!');
   console.log('\n📋 Default accounts:');
-  console.log('Super Admin: admin@posyandu.com / admin123');
+  console.log('Admin: admin@posyandu.com / admin123');
   console.log('User:  user@posyandu.com / user123');
 }
 

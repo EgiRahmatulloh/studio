@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAdminAuth, withSuperAdminAuth } from '@/lib/middleware';
+import { withAdminAuth } from '@/lib/middleware';
 import { getAllUsers, createUser, AuthUser } from '@/lib/auth';
 
-// GET - Mendapatkan semua user (hanya admin/superadmin)
+// GET - Mendapatkan semua user (hanya admin)
 export const GET = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
   try {
     const users = await getAllUsers();
@@ -16,7 +16,7 @@ export const GET = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
   }
 });
 
-// POST - Membuat user baru (hanya admin/superadmin)
+// POST - Membuat user baru (hanya admin)
 export const POST = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
   try {
     const { email, password, role, posyanduName } = await req.json();
@@ -35,10 +35,10 @@ export const POST = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
       );
     }
 
-    // Hanya SUPER_ADMIN yang boleh membuat ADMIN
-    if (role === 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+    // Admin hanya boleh membuat USER
+    if (role === 'ADMIN') {
         return NextResponse.json(
-            { error: 'Hanya Super Admin yang bisa membuat akun Admin.' },
+            { error: 'Admin tidak dapat membuat akun Admin lain.' },
             { status: 403 }
         );
     }

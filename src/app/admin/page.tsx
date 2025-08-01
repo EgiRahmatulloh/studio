@@ -19,13 +19,13 @@ import { Trash2, Edit, UserPlus, FilePlus } from 'lucide-react';
 interface User {
   id: string;
   email: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'USER';
+  role: 'ADMIN' | 'USER';
   permissions: string[];
   posyanduName?: string | null;
 }
 
 export default function AdminPage() {
-  const { user: currentUser, hasPermission, isAdmin, isSuperAdmin } = useAuth();
+  const { user: currentUser, hasPermission, isAdmin } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   
@@ -58,13 +58,13 @@ export default function AdminPage() {
       return;
     }
     
-    if (!isAdmin() && !isSuperAdmin()) {
+    if (!isAdmin()) {
       router.push('/');
       return;
     }
     
     fetchData();
-  }, [currentUser, isAdmin, isSuperAdmin, router]);
+  }, [currentUser, isAdmin, router]);
 
   const getAuthHeader = () => {
     const token = localStorage.getItem('auth-token');
@@ -283,7 +283,8 @@ export default function AdminPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="USER">User</SelectItem>
-                        {isSuperAdmin() && <SelectItem value="ADMIN">Admin</SelectItem>}
+                        {/* Admin tidak bisa membuat admin lain untuk saat ini */}
+                        {/* <SelectItem value="ADMIN">Admin</SelectItem> */}
                       </SelectContent>
                     </Select>
                   </div>
@@ -320,7 +321,7 @@ export default function AdminPage() {
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.posyanduName || '-'}</TableCell>
                   <TableCell>
-                    <Badge variant={user.role.includes('ADMIN') ? 'default' : 'secondary'}>
+                    <Badge variant={user.role === 'ADMIN' ? 'default' : 'secondary'}>
                       {user.role}
                     </Badge>
                   </TableCell>

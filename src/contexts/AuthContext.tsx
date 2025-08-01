@@ -6,7 +6,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 export interface User {
   id: string;
   email: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'USER';
+  role: 'ADMIN' | 'USER';
   permissions: string[];
   posyanduName?: string | null;
 }
@@ -19,7 +19,6 @@ interface AuthContextType {
   logout: () => Promise<void>;
   hasPermission: (permission: string) => boolean;
   isAdmin: () => boolean;
-  isSuperAdmin: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -112,15 +111,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hasPermission = (permission: string): boolean => {
     if (!user) return false;
     // Admin has all permissions. For other users, check if the permission is in their list.
-    return user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.permissions.includes(permission);
+    return user.role === 'ADMIN' || user.permissions.includes(permission);
   };
 
   const isAdmin = (): boolean => {
     return user?.role === 'ADMIN' || false;
-  };
-  
-  const isSuperAdmin = (): boolean => {
-    return user?.role === 'SUPER_ADMIN' || false;
   };
 
   const value = {
@@ -131,7 +126,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout,
     hasPermission,
     isAdmin,
-    isSuperAdmin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
