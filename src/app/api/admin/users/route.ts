@@ -19,7 +19,7 @@ export const GET = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
 // POST - Membuat user baru (hanya admin)
 export const POST = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
   try {
-    const { email, password, role, posyanduName } = await req.json();
+    const { email, password, role, fullName, posyanduName } = await req.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -47,6 +47,7 @@ export const POST = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
         email, 
         password, 
         role: role || 'USER',
+        fullName,
         posyanduName
     });
 
@@ -55,6 +56,7 @@ export const POST = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
       user: {
         id: newUser.id,
         email: newUser.email,
+        fullName: newUser.fullName,
         role: newUser.role,
         permissions: newUser.permissions,
         posyanduName: newUser.posyanduName,

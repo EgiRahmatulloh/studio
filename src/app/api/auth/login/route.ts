@@ -27,6 +27,8 @@ export async function POST(req: NextRequest) {
       user: {
         id: user.id,
         email: user.email,
+        fullName: user.fullName,
+        posyanduName: user.posyanduName,
         role: user.role,
         permissions: user.permissions,
       },

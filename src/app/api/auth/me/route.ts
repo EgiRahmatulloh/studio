@@ -8,6 +8,8 @@ export const GET = withAuth(async (req: NextRequest, user: AuthUser) => {
     user: {
       id: user.id,
       email: user.email,
+      fullName: user.fullName,
+      posyanduName: user.posyanduName,
       role: user.role,
       permissions: user.permissions,
     },

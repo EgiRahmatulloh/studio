@@ -30,10 +30,10 @@ export const GET = withAdminAuth(async (req: NextRequest, user: AuthUser, contex
     }
 });
 
-// PUT - Update user (permissions and posyanduName)
+// PUT - Update user (permissions, fullName, and posyanduName)
 export const PUT = withAdminAuth(async (req: NextRequest, user: AuthUser, context: RouteContext) => {
     try {
-      const { permissions, posyanduName } = await req.json();
+      const { permissions, fullName, posyanduName } = await req.json();
 
       if (!Array.isArray(permissions)) {
         return NextResponse.json(
@@ -42,7 +42,7 @@ export const PUT = withAdminAuth(async (req: NextRequest, user: AuthUser, contex
         );
       }
 
-      await updateUser(context.params.id, { permissions, posyanduName });
+      await updateUser(context.params.id, { permissions, fullName, posyanduName });
       const updatedUser = await getUserById(context.params.id);
 
       return NextResponse.json({

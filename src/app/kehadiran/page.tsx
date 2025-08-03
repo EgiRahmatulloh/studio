@@ -1,18 +1,16 @@
 
 "use client";
 
+"use client";
+
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Calendar as CalendarIcon, Download, Edit } from "lucide-react";
+import { Download, Edit } from "lucide-react";
 import * as XLSX from "xlsx";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Card,
   CardContent,
@@ -30,20 +28,8 @@ import {
     DialogTrigger,
     DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -55,16 +41,6 @@ import {
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-
-const attendanceSchema = z.object({
-  posyanduName: z.string().min(1, { message: "Nama Posyandu wajib diisi." }),
-  fullName: z.string().min(1, { message: "Nama Lengkap wajib diisi." }),
-  attendanceDate: z.date({
-    required_error: "Tanggal kehadiran wajib diisi.",
-  }),
-});
-
-type AttendanceFormValues = z.infer<typeof attendanceSchema>;
 
 interface AttendanceRecord {
   id: string;
@@ -79,6 +55,7 @@ export default function KehadiranPage() {
   const [isClient, setIsClient] = useState(false);
   const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [hasAttendedToday, setHasAttendedToday] = useState(false); // New state
   const { toast } = useToast();
   const { hasPermission, user } = useAuth();
   
@@ -89,26 +66,27 @@ export default function KehadiranPage() {
 
   useEffect(() => {
     setIsClient(true);
-    if(canView){
+    if(canView && user){ // Ensure user is loaded before fetching attendances
         fetchAttendances();
     }
   }, [user, canView]);
 
-  useEffect(() => {
-    if (editingRecord) {
-      form.reset({
-        posyanduName: editingRecord.posyanduName,
-        fullName: editingRecord.fullName,
-        attendanceDate: new Date(editingRecord.attendanceDate),
-      });
-    } else {
-      form.reset({
-          posyanduName: "",
-          fullName: "",
-          attendanceDate: new Date(),
-      });
-    }
-  }, [editingRecord]);
+  // No need for form.reset in useEffect for editingRecord as form is removed
+  // useEffect(() => {
+  //   if (editingRecord) {
+  //     form.reset({
+  //       posyanduName: editingRecord.posyanduName,
+  //       fullName: editingRecord.fullName,
+  //       attendanceDate: new Date(editingRecord.attendanceDate),
+  //     });
+  //   } else {
+  //     form.reset({
+  //         posyanduName: "",
+  //         fullName: "",
+  //         attendanceDate: new Date(),
+  //     });
+  //   }
+  // }, [editingRecord]);
 
   const fetchAttendances = async () => {
     try {
@@ -124,6 +102,14 @@ export default function KehadiranPage() {
       }
       const data: AttendanceRecord[] = await response.json();
       setAttendanceData(data);
+
+      // Check if user has attended today
+      const today = format(new Date(), "yyyy-MM-dd");
+      const userAttended = data.some(record => 
+        record.fullName === user?.fullName && format(new Date(record.attendanceDate), "yyyy-MM-dd") === today
+      );
+      setHasAttendedToday(userAttended);
+
     } catch (error: any) {
       console.error("Error fetching attendances:", error);
       toast({
@@ -134,33 +120,41 @@ export default function KehadiranPage() {
     }
   };
 
-  const form = useForm<AttendanceFormValues>({
-    resolver: zodResolver(attendanceSchema),
-    defaultValues: {
-      posyanduName: "",
-      fullName: "",
-      attendanceDate: new Date(),
-    },
-  });
+  // Remove useForm and zodResolver as form is removed
+  // const form = useForm<AttendanceFormValues>({
+  //   resolver: zodResolver(attendanceSchema),
+  //   defaultValues: {
+  //     posyanduName: "",
+  //     fullName: "",
+  //     attendanceDate: new Date(),
+  //   },
+  // });
 
   const handleEditClick = (record: AttendanceRecord) => {
     setEditingRecord(record);
     setIsEditDialogOpen(true);
   };
 
-  async function onSaveSubmit(data: AttendanceFormValues) {
+  async function handleRecordAttendance() {
+    if (!user || !user.fullName || !user.posyanduName) {
+      toast({
+        variant: "destructive",
+        title: "Gagal Mencatat Kehadiran",
+        description: "Informasi user tidak lengkap. Pastikan nama lengkap dan nama posyandu terisi di profil Anda.",
+      });
+      return;
+    }
+
     const payload = {
-      ...data,
-      attendanceDate: data.attendanceDate.toISOString(),
+      posyanduName: user.posyanduName,
+      fullName: user.fullName,
+      attendanceDate: new Date().toISOString(),
     };
     
-    const apiPath = editingRecord ? `/api/kehadiran/${editingRecord.id}` : '/api/kehadiran';
-    const method = editingRecord ? 'PUT' : 'POST';
-
     try {
       const token = localStorage.getItem('auth-token');
-      const response = await fetch(apiPath, {
-        method,
+      const response = await fetch('/api/kehadiran', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -169,34 +163,68 @@ export default function KehadiranPage() {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to ${editingRecord ? 'update' : 'save'} attendance`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to record attendance');
       }
 
       const resultRecord: AttendanceRecord = await response.json();
-
-      if (editingRecord) {
-        setAttendanceData(prev => prev.map(r => r.id === editingRecord.id ? resultRecord : r));
-      } else {
-        setAttendanceData(prev => [resultRecord, ...prev]);
-      }
+      setAttendanceData(prev => [resultRecord, ...prev]);
+      setHasAttendedToday(true); // Set to true after successful attendance
       
-      form.reset({
-          posyanduName: "",
-          fullName: "",
-          attendanceDate: new Date(),
+      toast({
+          title: "Sukses",
+          description: "Kehadiran berhasil dicatat.",
       });
+    } catch (error: any) {
+      console.error("Error recording attendance:", error);
+      toast({
+        variant: "destructive",
+        title: "Gagal Mencatat Kehadiran",
+        description: error.message || "Terjadi kesalahan saat mencatat kehadiran.",
+      });
+    }
+  }
+
+  async function onSaveEditSubmit(data: AttendanceRecord) { // Changed to AttendanceRecord type
+    if (!editingRecord) return;
+
+    const payload = {
+      posyanduName: data.posyanduName,
+      fullName: data.fullName,
+      attendanceDate: new Date(data.attendanceDate).toISOString(),
+    };
+    
+    try {
+      const token = localStorage.getItem('auth-token');
+      const response = await fetch(`/api/kehadiran/${editingRecord.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update attendance');
+      }
+
+      const resultRecord: AttendanceRecord = await response.json();
+      setAttendanceData(prev => prev.map(r => r.id === editingRecord.id ? resultRecord : r));
+      
       setEditingRecord(null);
       setIsEditDialogOpen(false);
       toast({
           title: "Sukses",
-          description: `Data kehadiran berhasil ${editingRecord ? 'diperbarui' : 'disimpan'}.`,
+          description: "Data kehadiran berhasil diperbarui.",
       });
-    } catch (error) {
-      console.error(`Error ${editingRecord ? 'updating' : 'saving'} attendance:`, error);
+    } catch (error: any) {
+      console.error("Error updating attendance:", error);
       toast({
         variant: "destructive",
-        title: "Gagal Menyimpan Data",
-        description: `Terjadi kesalahan saat ${editingRecord ? 'memperbarui' : 'menyimpan'} data kehadiran.`,
+        title: "Gagal Memperbarui Data",
+        description: error.message || "Terjadi kesalahan saat memperbarui data kehadiran.",
       });
     }
   }
@@ -230,93 +258,94 @@ export default function KehadiranPage() {
     });
   }
 
-  const renderForm = (isEdit: boolean) => (
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSaveSubmit)} id={isEdit ? "edit-kehadiran-form" : "create-kehadiran-form"}>
-          <CardContent className="space-y-6">
-            <FormField
-              control={form.control}
-              name="posyanduName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nama Posyandu</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Contoh: Posyandu Melati 1"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="fullName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nama Lengkap</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Contoh: Ibu Budi"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="attendanceDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Tanggal Kehadiran</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? (
-                            format(field.value, "PPP", {
-                              locale: id,
-                            })
-                          ) : (
-                            <span>Pilih tanggal</span>
-                          )}
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-auto p-0"
-                      align="start"
-                    >
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() ||
-                          date < new Date("2000-01-01")
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </form>
-      </Form>
-  )
+  // Removed renderForm function as it's no longer needed for creation
+  // const renderForm = (isEdit: boolean) => (
+  //     <Form {...form}>
+  //       <form onSubmit={form.handleSubmit(onSaveSubmit)} id={isEdit ? "edit-kehadiran-form" : "create-kehadiran-form"}>
+  //         <CardContent className="space-y-6">
+  //           <FormField
+  //             control={form.control}
+  //             name="posyanduName"
+  //             render={({ field }) => (
+  //               <FormItem>
+  //                 <FormLabel>Nama Posyandu</FormLabel>
+  //                 <FormControl>
+  //                   <Input
+  //                     placeholder="Contoh: Posyandu Melati 1"
+  //                     {...field}
+  //                   />
+  //                 </FormControl>
+  //                 <FormMessage />
+  //               </FormItem>
+  //             )}
+  //           />
+  //           <FormField
+  //             control={form.control}
+  //             name="fullName"
+  //             render={({ field }) => (
+  //               <FormItem>
+  //                 <FormLabel>Nama Lengkap</FormLabel>
+  //                 <FormControl>
+  //                   <Input
+  //                     placeholder="Contoh: Ibu Budi"
+  //                     {...field}
+  //                   />
+  //                 </FormControl>
+  //                 <FormMessage />
+  //               </FormItem>
+  //             )}
+  //           />
+  //           <FormField
+  //             control={form.control}
+  //             name="attendanceDate"
+  //             render={({ field }) => (
+  //               <FormItem className="flex flex-col">
+  //                 <FormLabel>Tanggal Kehadiran</FormLabel>
+  //                 <Popover>
+  //                   <PopoverTrigger asChild>
+  //                     <FormControl>
+  //                       <Button
+  //                         variant={"outline"}
+  //                         className={cn(
+  //                           "w-full justify-start text-left font-normal",
+  //                           !field.value && "text-muted-foreground"
+  //                         )}
+  //                       >
+  //                         <CalendarIcon className="mr-2 h-4 w-4" />
+  //                         {field.value ? (
+  //                           format(field.value, "PPP", {
+  //                             locale: id,
+  //                           })
+  //                         ) : (
+  //                           <span>Pilih tanggal</span>
+  //                         )}
+  //                       </Button>
+  //                     </FormControl>
+  //                   </PopoverTrigger>
+  //                   <PopoverContent
+  //                     className="w-auto p-0"
+  //                     align="start"
+  //                   >
+  //                     <Calendar
+  //                       mode="single"
+  //                       selected={field.value}
+  //                       onSelect={field.onChange}
+  //                       disabled={(date) =>
+  //                         date > new Date() ||
+  //                         date < new Date("2000-01-01")
+  //                       }
+  //                       initialFocus
+  //                     />
+  //                   </PopoverContent>
+  //                 </Popover>
+  //                 <FormMessage />
+  //               </FormItem>
+  //             )}
+  //           />
+  //         </CardContent>
+  //       </form>
+  //     </Form>
+  // )
 
   if (!canView) {
       return (
@@ -354,15 +383,18 @@ export default function KehadiranPage() {
                 <CardHeader>
                   <CardTitle>Catat Kehadiran Baru</CardTitle>
                   <CardDescription>
-                    Isi formulir di bawah ini untuk mencatat kehadiran.
+                    Klik tombol di bawah ini untuk mencatat kehadiran Anda.
                   </CardDescription>
                 </CardHeader>
-                {renderForm(false)}
-                <CardFooter>
-                    <Button type="submit" form="create-kehadiran-form" className="w-full">
-                        Simpan
+                <CardContent>
+                    <Button 
+                        onClick={handleRecordAttendance} 
+                        className="w-full"
+                        disabled={hasAttendedToday} // Disable button if already attended
+                    >
+                        {hasAttendedToday ? 'Sudah Hadir Hari Ini' : 'Catat Kehadiran'}
                     </Button>
-                </CardFooter>
+                </CardContent>
               </Card>
             </div>
           )}
@@ -446,12 +478,41 @@ export default function KehadiranPage() {
                     Perbarui informasi kehadiran di bawah ini.
                 </DialogDescription>
             </DialogHeader>
-            {renderForm(true)}
+            {/* Edit form content */}
+            <div className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="editPosyanduName">Nama Posyandu</Label>
+                    <Input 
+                        id="editPosyanduName" 
+                        type="text" 
+                        value={editingRecord?.posyanduName || ''} 
+                        onChange={(e) => setEditingRecord(prev => prev ? { ...prev, posyanduName: e.target.value } : null)} 
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="editFullName">Nama Lengkap</Label>
+                    <Input 
+                        id="editFullName" 
+                        type="text" 
+                        value={editingRecord?.fullName || ''} 
+                        onChange={(e) => setEditingRecord(prev => prev ? { ...prev, fullName: e.target.value } : null)} 
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="editAttendanceDate">Tanggal Kehadiran</Label>
+                    <Input 
+                        id="editAttendanceDate" 
+                        type="date" 
+                        value={editingRecord?.attendanceDate ? format(new Date(editingRecord.attendanceDate), 'yyyy-MM-dd') : ''} 
+                        onChange={(e) => setEditingRecord(prev => prev ? { ...prev, attendanceDate: e.target.value } : null)} 
+                    />
+                </div>
+            </div>
             <DialogFooter>
                 <Button onClick={() => setIsEditDialogOpen(false)} variant="outline">
                     Batal
                 </Button>
-                <Button type="submit" form="edit-kehadiran-form">
+                <Button onClick={() => onSaveEditSubmit(editingRecord!)}> {/* Pass editingRecord to onSaveEditSubmit */}
                     Simpan Perubahan
                 </Button>
             </DialogFooter>

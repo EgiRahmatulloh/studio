@@ -6,6 +6,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 export interface User {
   id: string;
   email: string;
+  fullName?: string | null;
   role: 'ADMIN' | 'USER';
   permissions: string[];
   posyanduName?: string | null;

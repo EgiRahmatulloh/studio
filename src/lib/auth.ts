@@ -8,20 +8,23 @@ const prisma = new PrismaClient();
 export interface AuthUser {
   id: string;
   email: string;
+  fullName?: string | null;
+  posyanduName?: string | null;
   role: Role;
   permissions: string[];
-  posyanduName?: string | null;
 }
 
 export interface CreateUserInput {
     email: string;
     password: string;
-    role?: Role;
+    fullName?: string;
     posyanduName?: string;
+    role?: Role;
 }
 
 export interface UpdateUserInput {
     permissions?: string[];
+    fullName?: string | null;
     posyanduName?: string | null;
     role?: Role;
 }
@@ -35,7 +38,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
   return bcrypt.compare(password, hashedPassword);
 }
 
-export async function createUser({ email, password, role = 'USER', posyanduName }: CreateUserInput): Promise<AuthUser> {
+export async function createUser({ email, password, role = 'USER', fullName, posyanduName }: CreateUserInput): Promise<AuthUser> {
   const hashedPassword = await hashPassword(password);
   
   const user = await prisma.user.create({
@@ -43,6 +46,7 @@ export async function createUser({ email, password, role = 'USER', posyanduName 
       email,
       password: hashedPassword,
       role,
+      fullName,
       posyanduName,
     },
     include: {
@@ -53,9 +57,10 @@ export async function createUser({ email, password, role = 'USER', posyanduName 
   return {
     id: user.id,
     email: user.email,
+    fullName: user.fullName,
+    posyanduName: user.posyanduName,
     role: user.role,
     permissions: user.permissions.map(p => p.name),
-    posyanduName: user.posyanduName,
   };
 }
 
@@ -74,19 +79,22 @@ export async function authenticateUser(email: string, password: string): Promise
   return {
     id: user.id,
     email: user.email,
+    fullName: user.fullName,
+    posyanduName: user.posyanduName,
     role: user.role,
     permissions: user.permissions.map(p => p.name),
-    posyanduName: user.posyanduName,
   };
 }
 
 export function generateToken(user: AuthUser): string {
   const payload: Omit<AuthUser, 'permissions'> & { userId: string, permissions: string[] } = {
+      id: user.id,
       userId: user.id,
       email: user.email,
+      fullName: user.fullName,
+      posyanduName: user.posyanduName,
       role: user.role,
       permissions: user.permissions,
-      posyanduName: user.posyanduName,
   };
 
   return jwt.sign(
@@ -102,9 +110,10 @@ export function verifyToken(token: string): AuthUser | null {
     return {
       id: decoded.userId,
       email: decoded.email,
+      fullName: decoded.fullName,
+      posyanduName: decoded.posyanduName,
       role: decoded.role,
       permissions: decoded.permissions || [],
-      posyanduName: decoded.posyanduName
     };
   } catch {
     return null;
@@ -124,9 +133,10 @@ export async function getUserById(id: string): Promise<AuthUser | null> {
   return {
     id: user.id,
     email: user.email,
+    fullName: user.fullName,
+    posyanduName: user.posyanduName,
     role: user.role,
     permissions: user.permissions.map(p => p.name),
-    posyanduName: user.posyanduName,
   };
 }
 
@@ -140,15 +150,19 @@ export async function getAllUsers(): Promise<AuthUser[]> {
   return users.map(user => ({
     id: user.id,
     email: user.email,
+    fullName: user.fullName,
+    posyanduName: user.posyanduName,
     role: user.role,
     permissions: user.permissions.map(p => p.name),
-    posyanduName: user.posyanduName,
   }));
 }
 
 export async function updateUser(userId: string, data: UpdateUserInput): Promise<void> {
     const updateData: any = {};
 
+    if (data.fullName !== undefined) {
+        updateData.fullName = data.fullName;
+    }
     if (data.posyanduName !== undefined) {
         updateData.posyanduName = data.posyanduName;
     }

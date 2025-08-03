@@ -19,6 +19,7 @@ import { Trash2, Edit, UserPlus, FilePlus } from 'lucide-react';
 interface User {
   id: string;
   email: string;
+  fullName?: string | null;
   role: 'ADMIN' | 'USER';
   permissions: string[];
   posyanduName?: string | null;
@@ -41,6 +42,7 @@ export default function AdminPage() {
   const [newUser, setNewUser] = useState({
     email: '',
     password: '',
+    fullName: '',
     role: 'USER' as 'ADMIN' | 'USER',
     posyanduName: '',
   });
@@ -48,6 +50,7 @@ export default function AdminPage() {
   const [editUser, setEditUser] = useState({
     id: '',
     email: '',
+    fullName: '',
     posyanduName: '',
     permissions: [] as string[],
   });
@@ -128,7 +131,7 @@ export default function AdminPage() {
           description: 'User berhasil dibuat',
         });
         setCreateDialogOpen(false);
-        setNewUser({ email: '', password: '', role: 'USER', posyanduName: '' });
+        setNewUser({ email: '', password: '', fullName: '', role: 'USER', posyanduName: '' });
         fetchData();
       } else {
         toast({
@@ -184,6 +187,7 @@ export default function AdminPage() {
     setEditUser({
       id: user.id,
       email: user.email,
+      fullName: user.fullName || '',
       posyanduName: user.posyanduName || '',
       permissions: user.permissions,
     });
@@ -199,6 +203,7 @@ export default function AdminPage() {
         method: 'PUT',
         headers: getAuthHeader(),
         body: JSON.stringify({ 
+          fullName: editUser.fullName,
           posyanduName: editUser.posyanduName,
           permissions: editUser.permissions 
         }),
@@ -271,6 +276,10 @@ export default function AdminPage() {
                     <Label htmlFor="password">Password</Label>
                     <Input id="password" type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} required />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">Nama Lengkap</Label>
+                    <Input id="fullName" type="text" value={newUser.fullName} onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })} placeholder="Contoh: John Doe" />
+                  </div>
                    <div className="space-y-2">
                     <Label htmlFor="posyanduName">Nama Posyandu</Label>
                     <Input id="posyanduName" type="text" value={newUser.posyanduName} onChange={(e) => setNewUser({ ...newUser, posyanduName: e.target.value })} placeholder="Contoh: Posyandu Melati 1" />
@@ -309,6 +318,7 @@ export default function AdminPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Email</TableHead>
+                <TableHead>Nama Lengkap</TableHead>
                 <TableHead>Nama Posyandu</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Permissions</TableHead>
@@ -319,6 +329,7 @@ export default function AdminPage() {
               {users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.fullName || '-'}</TableCell>
                   <TableCell>{user.posyanduName || '-'}</TableCell>
                   <TableCell>
                     <Badge variant={user.role === 'ADMIN' ? 'default' : 'secondary'}>
@@ -371,6 +382,10 @@ export default function AdminPage() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleUpdateUser} className="space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="editFullName">Nama Lengkap</Label>
+                <Input id="editFullName" type="text" value={editUser.fullName} onChange={(e) => setEditUser({ ...editUser, fullName: e.target.value })} />
+            </div>
             <div className="space-y-2">
                 <Label htmlFor="editPosyanduName">Nama Posyandu</Label>
                 <Input id="editPosyanduName" type="text" value={editUser.posyanduName} onChange={(e) => setEditUser({ ...editUser, posyanduName: e.target.value })} />

@@ -45,6 +45,8 @@ CREATE TABLE "attendance_records" (
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
+    "full_name" TEXT,
+    "posyandu_name" TEXT,
     "password" TEXT NOT NULL,
     "role" "Role" NOT NULL DEFAULT 'USER',
 
