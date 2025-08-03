@@ -8,6 +8,7 @@ export interface User {
   email: string;
   role: 'ADMIN' | 'USER';
   permissions: string[];
+  posyanduName?: string | null;
 }
 
 interface AuthContextType {

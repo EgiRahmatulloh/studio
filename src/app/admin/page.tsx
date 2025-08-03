@@ -14,17 +14,18 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, Edit, UserPlus } from 'lucide-react';
+import { Trash2, Edit, UserPlus, FilePlus } from 'lucide-react';
 
 interface User {
   id: string;
   email: string;
   role: 'ADMIN' | 'USER';
   permissions: string[];
+  posyanduName?: string | null;
 }
 
 export default function AdminPage() {
-  const { user, isAdmin } = useAuth();
+  const { user: currentUser, hasPermission, isAdmin } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   
@@ -32,21 +33,27 @@ export default function AdminPage() {
   const [permissions, setPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Form states
-  const [showCreateUser, setShowCreateUser] = useState(false);
-  const [showEditPermissions, setShowEditPermissions] = useState(false);
+  const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setEditDialogOpen] = useState(false);
+
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   
   const [newUser, setNewUser] = useState({
     email: '',
     password: '',
     role: 'USER' as 'ADMIN' | 'USER',
+    posyanduName: '',
   });
   
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [editUser, setEditUser] = useState({
+    id: '',
+    email: '',
+    posyanduName: '',
+    permissions: [] as string[],
+  });
 
   useEffect(() => {
-    if (!user) {
+    if (!currentUser) {
       router.push('/login');
       return;
     }
@@ -57,7 +64,7 @@ export default function AdminPage() {
     }
     
     fetchData();
-  }, [user, isAdmin, router]);
+  }, [currentUser, isAdmin, router]);
 
   const getAuthHeader = () => {
     const token = localStorage.getItem('auth-token');
@@ -68,6 +75,7 @@ export default function AdminPage() {
   };
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const headers = getAuthHeader();
       const [usersRes, permissionsRes] = await Promise.all([
@@ -78,11 +86,17 @@ export default function AdminPage() {
       if (usersRes.ok) {
         const usersData = await usersRes.json();
         setUsers(usersData.users);
+      } else {
+         const errorData = await usersRes.json();
+         toast({ title: 'Error', description: errorData.error, variant: 'destructive' });
       }
 
       if (permissionsRes.ok) {
         const permissionsData = await permissionsRes.json();
         setPermissions(permissionsData.permissions.map((p: any) => p.name));
+      } else {
+        const errorData = await permissionsRes.json();
+        toast({ title: 'Error', description: errorData.error, variant: 'destructive' });
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -113,8 +127,8 @@ export default function AdminPage() {
           title: 'Berhasil',
           description: 'User berhasil dibuat',
         });
-        setShowCreateUser(false);
-        setNewUser({ email: '', password: '', role: 'USER' });
+        setCreateDialogOpen(false);
+        setNewUser({ email: '', password: '', role: 'USER', posyanduName: '' });
         fetchData();
       } else {
         toast({
@@ -165,13 +179,18 @@ export default function AdminPage() {
     }
   };
 
-  const handleEditPermissions = (user: User) => {
+  const handleEditClick = (user: User) => {
     setSelectedUser(user);
-    setSelectedPermissions(user.permissions);
-    setShowEditPermissions(true);
+    setEditUser({
+      id: user.id,
+      email: user.email,
+      posyanduName: user.posyanduName || '',
+      permissions: user.permissions,
+    });
+    setEditDialogOpen(true);
   };
 
-  const handleUpdatePermissions = async (e: React.FormEvent) => {
+  const handleUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser) return;
 
@@ -179,7 +198,10 @@ export default function AdminPage() {
       const response = await fetch(`/api/admin/users/${selectedUser.id}`, {
         method: 'PUT',
         headers: getAuthHeader(),
-        body: JSON.stringify({ permissions: selectedPermissions }),
+        body: JSON.stringify({ 
+          posyanduName: editUser.posyanduName,
+          permissions: editUser.permissions 
+        }),
       });
 
       const data = await response.json();
@@ -187,11 +209,10 @@ export default function AdminPage() {
       if (response.ok) {
         toast({
           title: 'Berhasil',
-          description: 'Permissions berhasil diupdate',
+          description: 'User berhasil diupdate',
         });
-        setShowEditPermissions(false);
+        setEditDialogOpen(false);
         setSelectedUser(null);
-        setSelectedPermissions([]);
         fetchData();
       } else {
         toast({
@@ -208,6 +229,15 @@ export default function AdminPage() {
       });
     }
   };
+  
+  const handlePermissionChange = (permission: string, checked: boolean) => {
+    setEditUser(prev => ({
+        ...prev,
+        permissions: checked 
+            ? [...prev.permissions, permission]
+            : prev.permissions.filter(p => p !== permission)
+    }));
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -218,62 +248,52 @@ export default function AdminPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Admin Panel</h1>
         <div className="space-x-2">
-          <Dialog open={showCreateUser} onOpenChange={setShowCreateUser}>
-            <DialogTrigger asChild>
-              <Button>
-                <UserPlus className="w-4 h-4 mr-2" />
-                Tambah User
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Tambah User Baru</DialogTitle>
-                <DialogDescription>
-                  Buat akun user baru dengan role yang sesuai
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleCreateUser} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={newUser.email}
-                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={newUser.password}
-                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select
-                    value={newUser.role}
-                    onValueChange={(value: 'ADMIN' | 'USER') => setNewUser({ ...newUser, role: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USER">User</SelectItem>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button type="submit" className="w-full">
-                  Buat User
+            <Dialog open={isCreateDialogOpen} onOpenChange={setCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Tambah User
                 </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Tambah User Baru</DialogTitle>
+                  <DialogDescription>
+                    Buat akun user baru dengan peran dan izin yang sesuai.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleCreateUser} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input id="password" type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} required />
+                  </div>
+                   <div className="space-y-2">
+                    <Label htmlFor="posyanduName">Nama Posyandu</Label>
+                    <Input id="posyanduName" type="text" value={newUser.posyanduName} onChange={(e) => setNewUser({ ...newUser, posyanduName: e.target.value })} placeholder="Contoh: Posyandu Melati 1" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="role">Role</Label>
+                    <Select value={newUser.role} onValueChange={(value: 'ADMIN' | 'USER') => setNewUser({ ...newUser, role: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USER">User</SelectItem>
+                        {/* Admin tidak bisa membuat admin lain untuk saat ini */}
+                        {/* <SelectItem value="ADMIN">Admin</SelectItem> */}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button type="submit" className="w-full">
+                    Buat User
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
         </div>
       </div>
 
@@ -281,7 +301,7 @@ export default function AdminPage() {
         <CardHeader>
           <CardTitle>Manajemen User</CardTitle>
           <CardDescription>
-            Kelola user dan permissions mereka
+            Kelola user, peran, dan izin akses mereka.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -289,6 +309,7 @@ export default function AdminPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Email</TableHead>
+                <TableHead>Nama Posyandu</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Permissions</TableHead>
                 <TableHead>Aksi</TableHead>
@@ -298,13 +319,14 @@ export default function AdminPage() {
               {users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.posyanduName || '-'}</TableCell>
                   <TableCell>
                     <Badge variant={user.role === 'ADMIN' ? 'default' : 'secondary'}>
                       {user.role}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1 max-w-xs">
                       {user.permissions.map((permission) => (
                         <Badge key={permission} variant="outline" className="text-xs">
                           {permission}
@@ -317,17 +339,19 @@ export default function AdminPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleEditPermissions(user)}
+                        onClick={() => handleEditClick(user)}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDeleteUser(user.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {currentUser?.id !== user.id && (
+                        <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDeleteUser(user.id)}
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -336,39 +360,39 @@ export default function AdminPage() {
           </Table>
         </CardContent>
       </Card>
-
-      <Dialog open={showEditPermissions} onOpenChange={setShowEditPermissions}>
-        <DialogContent>
+      
+      {/* Edit User Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Permissions</DialogTitle>
+            <DialogTitle>Edit User: {selectedUser?.email}</DialogTitle>
             <DialogDescription>
-              Atur permissions untuk {selectedUser?.email}
+              Ubah nama posyandu dan izin akses untuk user ini.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleUpdatePermissions} className="space-y-4">
+          <form onSubmit={handleUpdateUser} className="space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="editPosyanduName">Nama Posyandu</Label>
+                <Input id="editPosyanduName" type="text" value={editUser.posyanduName} onChange={(e) => setEditUser({ ...editUser, posyanduName: e.target.value })} />
+            </div>
+
             <div className="space-y-2">
               <Label>Permissions</Label>
-              <div className="space-y-2 max-h-60 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto rounded-md border p-2">
                 {permissions.map((permission) => (
                   <div key={permission} className="flex items-center space-x-2">
                     <Checkbox
-                      id={permission}
-                      checked={selectedPermissions.includes(permission)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedPermissions([...selectedPermissions, permission]);
-                        } else {
-                          setSelectedPermissions(selectedPermissions.filter(p => p !== permission));
-                        }
-                      }}
+                      id={`edit-${permission}`}
+                      checked={editUser.permissions.includes(permission)}
+                      onCheckedChange={(checked) => handlePermissionChange(permission, !!checked)}
                     />
-                    <Label htmlFor={permission}>{permission}</Label>
+                    <Label htmlFor={`edit-${permission}`} className="font-normal">{permission}</Label>
                   </div>
                 ))}
               </div>
             </div>
             <Button type="submit" className="w-full">
-              Update Permissions
+              Simpan Perubahan
             </Button>
           </form>
         </DialogContent>

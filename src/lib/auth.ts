@@ -10,7 +10,22 @@ export interface AuthUser {
   email: string;
   role: Role;
   permissions: string[];
+  posyanduName?: string | null;
 }
+
+export interface CreateUserInput {
+    email: string;
+    password: string;
+    role?: Role;
+    posyanduName?: string;
+}
+
+export interface UpdateUserInput {
+    permissions?: string[];
+    posyanduName?: string | null;
+    role?: Role;
+}
+
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -20,7 +35,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
   return bcrypt.compare(password, hashedPassword);
 }
 
-export async function createUser(email: string, password: string, role: Role = 'USER'): Promise<AuthUser> {
+export async function createUser({ email, password, role = 'USER', posyanduName }: CreateUserInput): Promise<AuthUser> {
   const hashedPassword = await hashPassword(password);
   
   const user = await prisma.user.create({
@@ -28,6 +43,7 @@ export async function createUser(email: string, password: string, role: Role = '
       email,
       password: hashedPassword,
       role,
+      posyanduName,
     },
     include: {
       permissions: true,
@@ -39,6 +55,7 @@ export async function createUser(email: string, password: string, role: Role = '
     email: user.email,
     role: user.role,
     permissions: user.permissions.map(p => p.name),
+    posyanduName: user.posyanduName,
   };
 }
 
@@ -59,17 +76,21 @@ export async function authenticateUser(email: string, password: string): Promise
     email: user.email,
     role: user.role,
     permissions: user.permissions.map(p => p.name),
+    posyanduName: user.posyanduName,
   };
 }
 
 export function generateToken(user: AuthUser): string {
-  return jwt.sign(
-    { 
-      userId: user.id, 
-      email: user.email, 
+  const payload: Omit<AuthUser, 'permissions'> & { userId: string, permissions: string[] } = {
+      userId: user.id,
+      email: user.email,
       role: user.role,
-      permissions: user.permissions 
-    },
+      permissions: user.permissions,
+      posyanduName: user.posyanduName,
+  };
+
+  return jwt.sign(
+    payload,
     process.env.JWT_SECRET || 'your-secret-key',
     { expiresIn: '24h' }
   );
@@ -83,6 +104,7 @@ export function verifyToken(token: string): AuthUser | null {
       email: decoded.email,
       role: decoded.role,
       permissions: decoded.permissions || [],
+      posyanduName: decoded.posyanduName
     };
   } catch {
     return null;
@@ -104,6 +126,7 @@ export async function getUserById(id: string): Promise<AuthUser | null> {
     email: user.email,
     role: user.role,
     permissions: user.permissions.map(p => p.name),
+    posyanduName: user.posyanduName,
   };
 }
 
@@ -119,31 +142,39 @@ export async function getAllUsers(): Promise<AuthUser[]> {
     email: user.email,
     role: user.role,
     permissions: user.permissions.map(p => p.name),
+    posyanduName: user.posyanduName,
   }));
 }
 
-export async function updateUserPermissions(userId: string, permissionNames: string[]): Promise<void> {
-  // Disconnect all current permissions
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      permissions: {
-        set: [],
-      },
-    },
-  });
+export async function updateUser(userId: string, data: UpdateUserInput): Promise<void> {
+    const updateData: any = {};
 
-  // Connect new permissions
-  if (permissionNames.length > 0) {
+    if (data.posyanduName !== undefined) {
+        updateData.posyanduName = data.posyanduName;
+    }
+    
+    if (data.role) {
+        updateData.role = data.role;
+    }
+
+    if (data.permissions) {
+        // Disconnect all current permissions first
+        await prisma.user.update({
+            where: { id: userId },
+            data: {
+              permissions: { set: [] }
+            }
+        });
+        // Then connect the new ones
+        updateData.permissions = {
+            connect: data.permissions.map(name => ({ name })),
+        };
+    }
+
     await prisma.user.update({
-      where: { id: userId },
-      data: {
-        permissions: {
-          connect: permissionNames.map(name => ({ name })),
-        },
-      },
+        where: { id: userId },
+        data: updateData,
     });
-  }
 }
 
 export async function deleteUser(userId: string): Promise<void> {

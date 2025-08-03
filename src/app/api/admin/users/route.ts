@@ -19,7 +19,7 @@ export const GET = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
 // POST - Membuat user baru (hanya admin)
 export const POST = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
   try {
-    const { email, password, role } = await req.json();
+    const { email, password, role, posyanduName } = await req.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -35,7 +35,20 @@ export const POST = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
       );
     }
 
-    const newUser = await createUser(email, password, role || 'USER');
+    // Admin hanya boleh membuat USER
+    if (role === 'ADMIN') {
+        return NextResponse.json(
+            { error: 'Admin tidak dapat membuat akun Admin lain.' },
+            { status: 403 }
+        );
+    }
+
+    const newUser = await createUser({
+        email, 
+        password, 
+        role: role || 'USER',
+        posyanduName
+    });
 
     return NextResponse.json({
       message: 'User berhasil dibuat',
@@ -44,6 +57,7 @@ export const POST = withAdminAuth(async (req: NextRequest, user: AuthUser) => {
         email: newUser.email,
         role: newUser.role,
         permissions: newUser.permissions,
+        posyanduName: newUser.posyanduName,
       },
     });
   } catch (error: any) {

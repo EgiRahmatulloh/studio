@@ -1,5 +1,5 @@
 import { PrismaClient } from '../generated/prisma';
-import { createUser, createPermission } from '../lib/auth';
+import { createUser, createPermission, updateUser } from '../lib/auth';
 
 const prisma = new PrismaClient();
 
@@ -37,7 +37,7 @@ async function main() {
   // Buat admin default
   console.log('👤 Creating default admin user...');
   try {
-    const adminUser = await createUser('admin@posyandu.com', 'admin123', 'ADMIN');
+    const adminUser = await createUser({ email: 'admin@posyandu.com', password: 'admin123', role: 'ADMIN', posyanduName: 'Kantor Pusat' });
     console.log('✅ Created admin user:', adminUser.email);
   } catch (error: any) {
     if (error.code === 'P2002') {
@@ -50,12 +50,11 @@ async function main() {
   // Buat user demo
   console.log('👤 Creating demo user...');
   try {
-    const demoUser = await createUser('user@posyandu.com', 'user123', 'USER');
+    const demoUser = await createUser({ email: 'user@posyandu.com', password: 'user123', role: 'USER', posyanduName: 'Posyandu Melati 1' });
     console.log('✅ Created demo user:', demoUser.email);
     
     // Berikan beberapa permissions ke demo user
-    const { updateUserPermissions } = await import('../lib/auth');
-    await updateUserPermissions(demoUser.id, ['view_kehadiran', 'view_kegiatan']);
+    await updateUser(demoUser.id, { permissions: ['view_kehadiran', 'view_kegiatan', 'export_data'] });
     console.log('✅ Assigned permissions to demo user');
   } catch (error: any) {
     if (error.code === 'P2002') {
