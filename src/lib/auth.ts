@@ -1,5 +1,5 @@
 
-import { PrismaClient, Role, Permission } from '../generated/prisma';
+import { PrismaClient, Role, Permission } from '../../src/generated/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -169,5 +169,3 @@ export function hasPermission(user: AuthUser, permissionName: string): boolean {
 export function isAdmin(user: AuthUser): boolean {
   return user.role === 'ADMIN';
 }
-
-    
