@@ -42,8 +42,6 @@ export const POST = withPermission('create_kegiatan', async (request: NextReques
         pengunjungBusu: data.pengunjungBusu,
         pengunjungBayi: data.pengunjungBayi,
         pengunjungDewasa: data.pengunjungDewasa,
-        totalSasaran: data.totalSasaran,
-        totalPengunjung: data.totalPengunjung,
         fotoUrl: data.fotoUrl,
       },
     });

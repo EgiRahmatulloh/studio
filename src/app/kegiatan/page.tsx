@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,7 +6,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Calendar as CalendarIcon, Download, Link as LinkIcon, Edit } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  Download,
+  Link as LinkIcon,
+  Edit,
+} from "lucide-react";
 import * as XLSX from "xlsx";
 
 import { cn } from "@/lib/utils";
@@ -27,7 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -55,13 +59,13 @@ import {
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
-import Link from 'next/link';
+import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 
-
 const numberSchema = z.preprocess(
-    (a) => (a === '' || a === undefined || a === null ? 0 : parseInt(String(a), 10)),
-    z.number().min(0, "Jumlah tidak boleh negatif").optional().default(0)
+  (a: unknown) =>
+    a === "" || a === undefined || a === null ? 0 : parseInt(String(a), 10),
+  z.number().min(0, "Jumlah tidak boleh negatif").optional().default(0)
 );
 
 const activitySchema = z.object({
@@ -85,7 +89,11 @@ const activitySchema = z.object({
   pengunjungBusu: numberSchema,
   pengunjungBayi: numberSchema,
   pengunjungDewasa: numberSchema,
-  kegiatanFoto: z.string().url({ message: "Harap masukkan URL Google Drive yang valid." }).optional().or(z.literal('')),
+  kegiatanFoto: z
+    .string()
+    .url({ message: "Harap masukkan URL Google Drive yang valid." })
+    .optional()
+    .or(z.literal("")),
 });
 
 type ActivityFormValues = z.infer<typeof activitySchema>;
@@ -111,28 +119,28 @@ interface ActivityRecord {
   pengunjungBusu: number;
   pengunjungBayi: number;
   pengunjungDewasa: number;
-  totalSasaran: number;
-  totalPengunjung: number;
   fotoUrl?: string;
 }
 
 export default function KegiatanPage() {
   const [activityData, setActivityData] = useState<ActivityRecord[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const [editingRecord, setEditingRecord] = useState<ActivityRecord | null>(null);
+  const [editingRecord, setEditingRecord] = useState<ActivityRecord | null>(
+    null
+  );
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
   const { hasPermission, user } = useAuth();
-  
-  const canCreate = hasPermission('create_kegiatan');
-  const canExport = hasPermission('export_data');
-  const canView = hasPermission('view_kegiatan');
-  const canEdit = hasPermission('edit_kegiatan');
+
+  const canCreate = hasPermission("create_kegiatan");
+  const canExport = hasPermission("export_data");
+  const canView = hasPermission("view_kegiatan");
+  const canEdit = hasPermission("edit_kegiatan");
 
   useEffect(() => {
     setIsClient(true);
-    if(canView){
-        fetchActivities();
+    if (canView) {
+      fetchActivities();
     }
   }, [user, canView]);
 
@@ -150,15 +158,15 @@ export default function KegiatanPage() {
 
   const fetchActivities = async () => {
     try {
-      const token = localStorage.getItem('auth-token');
-      const response = await fetch('/api/kegiatan', {
-          headers: {
-              'Authorization': `Bearer ${token}`
-          }
+      const token = localStorage.getItem("auth-token");
+      const response = await fetch("/api/kegiatan", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch activities');
+        throw new Error(errorData.error || "Failed to fetch activities");
       }
       const data: ActivityRecord[] = await response.json();
       setActivityData(data);
@@ -167,7 +175,8 @@ export default function KegiatanPage() {
       toast({
         variant: "destructive",
         title: "Gagal Memuat Data",
-        description: error.message || "Terjadi kesalahan saat memuat data kegiatan.",
+        description:
+          error.message || "Terjadi kesalahan saat memuat data kegiatan.",
       });
     }
   };
@@ -175,11 +184,25 @@ export default function KegiatanPage() {
   const form = useForm<ActivityFormValues>({
     resolver: zodResolver(activitySchema),
     defaultValues: {
-        posyanduName: "",
-        activityDate: new Date(),
-        sasaranBalita: 0, sasaranBumil: 0, sasaranRemaja: 0, sasaranLansia: 0, sasaranBufas: 0, sasaranBusu: 0, sasaranBayi: 0, sasaranDewasa: 0,
-        pengunjungBalita: 0, pengunjungBumil: 0, pengunjungRemaja: 0, pengunjungLansia: 0, pengunjungBufas: 0, pengunjungBusu: 0, pengunjungBayi: 0, pengunjungDewasa: 0,
-        kegiatanFoto: "",
+      posyanduName: "",
+      activityDate: new Date(),
+      sasaranBalita: 0,
+      sasaranBumil: 0,
+      sasaranRemaja: 0,
+      sasaranLansia: 0,
+      sasaranBufas: 0,
+      sasaranBusu: 0,
+      sasaranBayi: 0,
+      sasaranDewasa: 0,
+      pengunjungBalita: 0,
+      pengunjungBumil: 0,
+      pengunjungRemaja: 0,
+      pengunjungLansia: 0,
+      pengunjungBufas: 0,
+      pengunjungBusu: 0,
+      pengunjungBayi: 0,
+      pengunjungDewasa: 0,
+      kegiatanFoto: "",
     },
   });
 
@@ -189,55 +212,63 @@ export default function KegiatanPage() {
   };
 
   async function onSaveSubmit(data: ActivityFormValues) {
-    const totalSasaran = Object.keys(data).filter(k => k.startsWith('sasaran')).reduce((acc, key) => acc + (data[key as keyof ActivityFormValues] as number || 0), 0);
-    const totalPengunjung = Object.keys(data).filter(k => k.startsWith('pengunjung')).reduce((acc, key) => acc + (data[key as keyof ActivityFormValues] as number || 0), 0);
-    
     const payload = {
       ...data,
-      totalSasaran,
-      totalPengunjung,
       fotoUrl: data.kegiatanFoto,
       activityDate: data.activityDate.toISOString(),
     };
 
-    const apiPath = editingRecord ? `/api/kegiatan/${editingRecord.id}` : '/api/kegiatan';
-    const method = editingRecord ? 'PUT' : 'POST';
+    const apiPath = editingRecord
+      ? `/api/kegiatan/${editingRecord.id}`
+      : "/api/kegiatan";
+    const method = editingRecord ? "PUT" : "POST";
 
     try {
-      const token = localStorage.getItem('auth-token');
+      const token = localStorage.getItem("auth-token");
       const response = await fetch(apiPath, {
         method,
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to ${editingRecord ? 'update' : 'save'} activity`);
+        throw new Error(
+          `Failed to ${editingRecord ? "update" : "save"} activity`
+        );
       }
 
       const resultRecord: ActivityRecord = await response.json();
       if (editingRecord) {
-        setActivityData(prev => prev.map(r => r.id === editingRecord.id ? resultRecord : r));
+        setActivityData((prev) =>
+          prev.map((r) => (r.id === editingRecord.id ? resultRecord : r))
+        );
       } else {
-        setActivityData(prev => [resultRecord, ...prev]);
+        setActivityData((prev) => [resultRecord, ...prev]);
       }
-      
+
       form.reset();
       setEditingRecord(null);
       setIsEditDialogOpen(false);
       toast({
-          title: "Sukses",
-          description: `Data kegiatan berhasil ${editingRecord ? 'diperbarui' : 'disimpan'}.`,
+        title: "Sukses",
+        description: `Data kegiatan berhasil ${
+          editingRecord ? "diperbarui" : "disimpan"
+        }.`,
       });
     } catch (error) {
-      console.error(`Error ${editingRecord ? 'updating' : 'saving'} activity:`, error);
+      console.error(
+        `Error ${editingRecord ? "updating" : "saving"} activity:`,
+        error
+      );
       toast({
         variant: "destructive",
         title: "Gagal Menyimpan Data",
-        description: `Terjadi kesalahan saat ${editingRecord ? 'memperbarui' : 'menyimpan'} data kegiatan.`,
+        description: `Terjadi kesalahan saat ${
+          editingRecord ? "memperbarui" : "menyimpan"
+        } data kegiatan.`,
       });
     }
   }
@@ -252,13 +283,44 @@ export default function KegiatanPage() {
       return;
     }
 
-    const header1 = ['Nama Posyandu', 'Tanggal Kegiatan', 'Jumlah sasaran', '', '', '', '', '', '', '', '', 'Pengunjung', '', '', '', '', '', '', '', '', 'Foto Kegiatan'];
-    const header2 = ['', '', 'Bayi', 'Balita', 'Bumil', 'Bufas', 'Busu', 'Remaja', 'Dewasa', 'Lansia', 'Total', 'Bayi', 'Balita', 'Bumil', 'Bufas', 'Busu', 'Remaja', 'Dewasa', 'Lansia', 'Total', ''];
-    
-    const dataForExport = activityData.map(item => {
+    const header1 = [
+      "Nama Posyandu",
+      "Tanggal Kegiatan",
+      "Jumlah sasaran",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "Foto Kegiatan",
+    ];
+    const header2 = [
+      "",
+      "",
+      "Bayi",
+      "Balita",
+      "Bumil",
+      "Bufas",
+      "Busu",
+      "Remaja",
+      "Dewasa",
+      "Lansia",
+      "Bayi",
+      "Balita",
+      "Bumil",
+      "Bufas",
+      "Busu",
+      "Remaja",
+      "Dewasa",
+      "Lansia",
+      "",
+    ];
+
+    const dataForExport = activityData.map((item) => {
       return [
         item.posyanduName,
-        format(new Date(item.activityDate), 'yyyy-MM-dd'),
+        format(new Date(item.activityDate), "yyyy-MM-dd"),
         item.sasaranBayi || 0,
         item.sasaranBalita || 0,
         item.sasaranBumil || 0,
@@ -267,7 +329,6 @@ export default function KegiatanPage() {
         item.sasaranRemaja || 0,
         item.sasaranDewasa || 0,
         item.sasaranLansia || 0,
-        item.totalSasaran,
         item.pengunjungBayi || 0,
         item.pengunjungBalita || 0,
         item.pengunjungBumil || 0,
@@ -276,27 +337,66 @@ export default function KegiatanPage() {
         item.pengunjungRemaja || 0,
         item.pengunjungDewasa || 0,
         item.pengunjungLansia || 0,
-        item.totalPengunjung,
-        item.fotoUrl || ''
+        item.fotoUrl || "",
       ];
     });
 
     const finalData = [header1, header2, ...dataForExport];
     const worksheet = XLSX.utils.aoa_to_sheet(finalData);
 
-    worksheet['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } }, 
-      { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } }, 
-      { s: { r: 0, c: 20 }, e: { r: 1, c: 20 } },
-      { s: { r: 0, c: 2 }, e: { r: 0, c: 10 } }, 
-      { s: { r: 0, c: 11 }, e: { r: 0, c: 19 } },
+    worksheet["!merges"] = [
+      { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },
+      { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } },
+      { s: { r: 0, c: 19 }, e: { r: 1, c: 19 } },
+      { s: { r: 0, c: 2 }, e: { r: 0, c: 9 } },
+      { s: { r: 0, c: 10 }, e: { r: 0, c: 18 } },
     ];
-    
+
     worksheet["!cols"] = [
-        { wch: 30 }, { wch: 15 },
-        { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 },
-        { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 },
-        { wch: 30 }
+      { wch: 30 },
+      { wch: 15 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 30 },
+    ];
+
+    worksheet["!cols"] = [
+      { wch: 30 },
+      { wch: 15 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 8 },
+      { wch: 30 },
     ];
 
     const workbook = XLSX.utils.book_new();
@@ -310,118 +410,369 @@ export default function KegiatanPage() {
   }
 
   const renderForm = (isEdit: boolean) => (
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSaveSubmit)} id={isEdit ? "edit-kegiatan-form" : "create-kegiatan-form"}>
-          <CardContent className="space-y-6">
-            <FormField
-              control={form.control}
-              name="posyanduName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nama Posyandu</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Contoh: Posyandu Melati 1" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="activityDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Tanggal Kegiatan</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? (
-                            format(field.value, "PPP", { locale: id })
-                          ) : (
-                            <span>Pilih tanggal</span>
-                          )}
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("2000-01-01")
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Separator />
-            <div>
-                <h3 className="mb-4 text-lg font-medium">Jumlah Sasaran</h3>
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="sasaranBayi" render={({ field }) => (<FormItem><FormLabel>Bayi</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name="sasaranBalita" render={({ field }) => (<FormItem><FormLabel>Balita</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name="sasaranBumil" render={({ field }) => (<FormItem><FormLabel>Bumil</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name="sasaranBufas" render={({ field }) => (<FormItem><FormLabel>Bufas</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name="sasaranBusu" render={({ field }) => (<FormItem><FormLabel>Busu</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name="sasaranRemaja" render={({ field }) => (<FormItem><FormLabel>Remaja</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name="sasaranDewasa" render={({ field }) => (<FormItem><FormLabel>Dewasa</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name="sasaranLansia" render={({ field }) => (<FormItem><FormLabel>Lansia</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                </div>
-            </div>
-            <Separator />
-            <div>
-                <h3 className="mb-4 text-lg font-medium">Pengunjung</h3>
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="pengunjungBayi" render={({ field }) => (<FormItem><FormLabel>Bayi</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name="pengunjungBalita" render={({ field }) => (<FormItem><FormLabel>Balita</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name="pengunjungBumil" render={({ field }) => (<FormItem><FormLabel>Bumil</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name="pengunjungBufas" render={({ field }) => (<FormItem><FormLabel>Bufas</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name="pengunjungBusu" render={({ field }) => (<FormItem><FormLabel>Busu</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name="pengunjungRemaja" render={({ field }) => (<FormItem><FormLabel>Remaja</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name="pengunjungDewasa" render={({ field }) => (<FormItem><FormLabel>Dewasa</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name="pengunjungLansia" render={({ field }) => (<FormItem><FormLabel>Lansia</FormLabel><FormControl><Input type="number" {...field} value={field.value || ''} /></FormControl></FormItem>)} />
-                </div>
-            </div>
-            <Separator />
-            <FormField
-                control={form.control}
-                name="kegiatanFoto"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Link Foto Kegiatan (Google Drive)</FormLabel>
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSaveSubmit)}
+        id={isEdit ? "edit-kegiatan-form" : "create-kegiatan-form"}
+      >
+        <CardContent className="space-y-6">
+          <FormField
+            control={form.control}
+            name="posyanduName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nama Posyandu</FormLabel>
+                <FormControl>
+                  <Input placeholder="Contoh: Posyandu Melati 1" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="activityDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Tanggal Kegiatan</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
                     <FormControl>
-                      <Input placeholder="https://docs.google.com/..." {...field} value={field.value || ''} />
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {field.value ? (
+                          format(field.value, "PPP", { locale: id })
+                        ) : (
+                          <span>Pilih tanggal</span>
+                        )}
+                      </Button>
                     </FormControl>
-                    <FormDescription>Salin dan tempel tautan dari Google Drive.</FormDescription>
-                    <FormMessage />
-                    </FormItem>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("2000-01-01")
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Separator />
+          <div>
+            <h3 className="mb-4 text-lg font-medium">Jumlah Sasaran</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="sasaranBayi"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bayi</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                  </FormItem>
                 )}
-                />
-          </CardContent>
-        </form>
-      </Form>
+              />
+              <FormField
+                control={form.control}
+                name="sasaranBalita"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Balita</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sasaranBumil"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bumil</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sasaranBufas"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bufas</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sasaranBusu"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Busu</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sasaranRemaja"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Remaja</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sasaranDewasa"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Dewasa</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sasaranLansia"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Lansia</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+          <Separator />
+          <div>
+            <h3 className="mb-4 text-lg font-medium">Pengunjung</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="pengunjungBayi"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bayi</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="pengunjungBalita"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Balita</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="pengunjungBumil"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bumil</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="pengunjungBufas"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bufas</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="pengunjungBusu"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Busu</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="pengunjungRemaja"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Remaja</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="pengunjungDewasa"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Dewasa</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="pengunjungLansia"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Lansia</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+          <Separator />
+          <FormField
+            control={form.control}
+            name="kegiatanFoto"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Link Foto Kegiatan (Google Drive)</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="https://docs.google.com/..."
+                    {...field}
+                    value={field.value || ""}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Salin dan tempel tautan dari Google Drive.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </CardContent>
+      </form>
+    </Form>
   );
 
   if (!canView) {
-      return (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-              <h1 className="text-2xl font-bold">Akses Ditolak</h1>
-              <p className="text-muted-foreground">Anda tidak memiliki izin untuk melihat halaman ini.</p>
-          </div>
-      )
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center">
+        <h1 className="text-2xl font-bold">Akses Ditolak</h1>
+        <p className="text-muted-foreground">
+          Anda tidak memiliki izin untuk melihat halaman ini.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -444,7 +795,12 @@ export default function KegiatanPage() {
           )}
         </header>
 
-        <div className={cn("grid grid-cols-1 gap-12", canCreate && "lg:grid-cols-5")}>
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-12",
+            canCreate && "lg:grid-cols-5"
+          )}
+        >
           {canCreate && (
             <div className="lg:col-span-2">
               <Card className="shadow-lg">
@@ -456,7 +812,11 @@ export default function KegiatanPage() {
                 </CardHeader>
                 {renderForm(false)}
                 <CardFooter>
-                  <Button type="submit" form="create-kegiatan-form" className="w-full">
+                  <Button
+                    type="submit"
+                    form="create-kegiatan-form"
+                    className="w-full"
+                  >
                     Simpan Kegiatan
                   </Button>
                 </CardFooter>
@@ -480,8 +840,6 @@ export default function KegiatanPage() {
                         <TableHead>Timestamp</TableHead>
                         <TableHead>Nama Posyandu</TableHead>
                         <TableHead>Tgl Kegiatan</TableHead>
-                        <TableHead>Total Sasaran</TableHead>
-                        <TableHead>Total Pengunjung</TableHead>
                         <TableHead>Foto</TableHead>
                         {canEdit && <TableHead>Aksi</TableHead>}
                       </TableRow>
@@ -491,24 +849,30 @@ export default function KegiatanPage() {
                         activityData.map((record) => (
                           <TableRow key={record.id}>
                             <TableCell className="whitespace-nowrap">
-                              {format(new Date(record.timestamp), "Pp", { locale: id })}
+                              {format(new Date(record.timestamp), "Pp", {
+                                locale: id,
+                              })}
                             </TableCell>
                             <TableCell>{record.posyanduName}</TableCell>
                             <TableCell>
-                              {format(new Date(record.activityDate), "PPP", { locale: id })}
+                              {format(new Date(record.activityDate), "PPP", {
+                                locale: id,
+                              })}
                             </TableCell>
-                            <TableCell className="text-center">{record.totalSasaran}</TableCell>
-                             <TableCell className="text-center">{record.totalPengunjung}</TableCell>
                             <TableCell>
-                                {record.fotoUrl ? (
-                                    <Button asChild variant="outline" size="sm">
-                                        <Link href={record.fotoUrl} target="_blank" rel="noopener noreferrer">
-                                            <LinkIcon className="mr-2 h-4 w-4" /> Buka
-                                        </Link>
-                                    </Button>
-                                ) : (
-                                    <span>-</span>
-                                )}
+                              {record.fotoUrl ? (
+                                <Button asChild variant="outline" size="sm">
+                                  <Link
+                                    href={record.fotoUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <LinkIcon className="mr-2 h-4 w-4" /> Buka
+                                  </Link>
+                                </Button>
+                              ) : (
+                                <span>-</span>
+                              )}
                             </TableCell>
                             {canEdit && (
                               <TableCell>
@@ -525,7 +889,10 @@ export default function KegiatanPage() {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={canEdit ? 7 : 6} className="h-24 text-center">
+                          <TableCell
+                            colSpan={canEdit ? 5 : 4}
+                            className="h-24 text-center"
+                          >
                             {isClient ? "Belum ada data." : "Memuat..."}
                           </TableCell>
                         </TableRow>
@@ -538,7 +905,7 @@ export default function KegiatanPage() {
           </div>
         </div>
       </div>
-      
+
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
@@ -547,11 +914,14 @@ export default function KegiatanPage() {
           </DialogHeader>
           {renderForm(true)}
           <DialogFooter>
-            <Button onClick={() => setIsEditDialogOpen(false)} variant="outline">
-                Batal
+            <Button
+              onClick={() => setIsEditDialogOpen(false)}
+              variant="outline"
+            >
+              Batal
             </Button>
             <Button type="submit" form="edit-kegiatan-form">
-                Simpan Perubahan
+              Simpan Perubahan
             </Button>
           </DialogFooter>
         </DialogContent>
