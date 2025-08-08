@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Activity, Home, Users, Settings, LogOut } from 'lucide-react';
+import { Activity, Home, Users, Settings, LogOut, User as UserIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -84,6 +84,15 @@ export function AppSidebar() {
             </SidebarMenuItem>
           )}
           
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <Link href="/profile">
+                <UserIcon />
+                Profil
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
           {isAdmin() && (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>

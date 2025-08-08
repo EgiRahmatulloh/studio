@@ -108,7 +108,7 @@ export function verifyToken(token: string): AuthUser | null {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
     return {
-      id: decoded.userId,
+      id: decoded.id,
       email: decoded.email,
       fullName: decoded.fullName,
       posyanduName: decoded.posyanduName,

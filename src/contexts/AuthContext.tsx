@@ -15,6 +15,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  fetchUser: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, role?: 'ADMIN' | 'USER') => Promise<void>;
   logout: () => Promise<void>;
@@ -30,10 +31,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Cek user yang sedang login saat aplikasi dimuat
   useEffect(() => {
-    checkAuth();
+    fetchUser();
   }, []);
 
-  const checkAuth = async () => {
+  const fetchUser = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('auth-token');
@@ -122,6 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     loading,
+    fetchUser,
     login,
     register,
     logout,
