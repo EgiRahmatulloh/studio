@@ -1,6 +1,3 @@
-
-"use client";
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,13 +17,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,69 +49,71 @@ interface AttendanceRecord {
 export default function KehadiranPage() {
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
+  const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(
+    null
+  );
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [hasAttendedToday, setHasAttendedToday] = useState(false); // New state
   const { toast } = useToast();
-  const { hasPermission, user } = useAuth();
-  
-  const canCreate = hasPermission('create_kehadiran');
-  const canExport = hasPermission('export_data');
-  const canView = hasPermission('view_kehadiran');
-  const canEdit = hasPermission('edit_kehadiran');
+  const { hasPermission, user, loading } = useAuth();
 
   useEffect(() => {
     setIsClient(true);
-    if(canView && user){ // Ensure user is loaded before fetching attendances
-        fetchAttendances();
-    }
-  }, [user, canView]);
+  }, []);
 
-  // No need for form.reset in useEffect for editingRecord as form is removed
-  // useEffect(() => {
-  //   if (editingRecord) {
-  //     form.reset({
-  //       posyanduName: editingRecord.posyanduName,
-  //       fullName: editingRecord.fullName,
-  //       attendanceDate: new Date(editingRecord.attendanceDate),
-  //     });
-  //   } else {
-  //     form.reset({
-  //         posyanduName: "",
-  //         fullName: "",
-  //         attendanceDate: new Date(),
-  //     });
-  //   }
-  // }, [editingRecord]);
+  // Handle loading state first to prevent conditional hook execution issues
+  // that might arise from the useAuth hook.
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p>Memuat data pengguna...</p>
+      </div>
+    );
+  }
+
+  // Now that loading is false, we can safely check permissions.
+  const canCreate = hasPermission("create_kehadiran");
+  const canExport = hasPermission("export_data");
+  const canView = hasPermission("view_kehadiran");
+  const canEdit = hasPermission("edit_kehadiran");
+
+  // This effect fetches data once permissions are confirmed.
+  useEffect(() => {
+    if (user && canView) {
+      fetchAttendances();
+    }
+  }, [user, canView]); // Dependencies are stable after the loading check.
 
   const fetchAttendances = async () => {
     try {
-      const token = localStorage.getItem('auth-token');
-      const response = await fetch('/api/kehadiran', {
-          headers: {
-              'Authorization': `Bearer ${token}`
-          }
+      const token = localStorage.getItem("auth-token");
+      const response = await fetch("/api/kehadiran", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch attendances');
+        throw new Error(errorData.error || "Failed to fetch attendances");
       }
       const data: AttendanceRecord[] = await response.json();
       setAttendanceData(data);
 
       // Check if user has attended today
       const today = format(new Date(), "yyyy-MM-dd");
-      const userAttended = data.some(record => 
-        record.fullName === user?.fullName && format(new Date(record.attendanceDate), "yyyy-MM-dd") === today
+      const userAttended = data.some(
+        (record) =>
+          record.fullName === user?.fullName &&
+          format(new Date(record.attendanceDate), "yyyy-MM-dd") === today
       );
       setHasAttendedToday(userAttended);
-
     } catch (error: any) {
       console.error("Error fetching attendances:", error);
       toast({
         variant: "destructive",
         title: "Gagal Memuat Data",
-        description: error.message || "Terjadi kesalahan saat memuat data kehadiran.",
+        description:
+          error.message || "Terjadi kesalahan saat memuat data kehadiran.",
       });
     }
   };
@@ -140,7 +138,8 @@ export default function KehadiranPage() {
       toast({
         variant: "destructive",
         title: "Gagal Mencatat Kehadiran",
-        description: "Informasi user tidak lengkap. Pastikan nama lengkap dan nama posyandu terisi di profil Anda.",
+        description:
+          "Informasi user tidak lengkap. Pastikan nama lengkap dan nama posyandu terisi di profil Anda.",
       });
       return;
     }
@@ -150,42 +149,44 @@ export default function KehadiranPage() {
       fullName: user.fullName,
       attendanceDate: new Date().toISOString(),
     };
-    
+
     try {
-      const token = localStorage.getItem('auth-token');
-      const response = await fetch('/api/kehadiran', {
-        method: 'POST',
+      const token = localStorage.getItem("auth-token");
+      const response = await fetch("/api/kehadiran", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to record attendance');
+        throw new Error(errorData.error || "Failed to record attendance");
       }
 
       const resultRecord: AttendanceRecord = await response.json();
-      setAttendanceData(prev => [resultRecord, ...prev]);
+      setAttendanceData((prev) => [resultRecord, ...prev]);
       setHasAttendedToday(true); // Set to true after successful attendance
-      
+
       toast({
-          title: "Sukses",
-          description: "Kehadiran berhasil dicatat.",
+        title: "Sukses",
+        description: "Kehadiran berhasil dicatat.",
       });
     } catch (error: any) {
       console.error("Error recording attendance:", error);
       toast({
         variant: "destructive",
         title: "Gagal Mencatat Kehadiran",
-        description: error.message || "Terjadi kesalahan saat mencatat kehadiran.",
+        description:
+          error.message || "Terjadi kesalahan saat mencatat kehadiran.",
       });
     }
   }
 
-  async function onSaveEditSubmit(data: AttendanceRecord) { // Changed to AttendanceRecord type
+  async function onSaveEditSubmit(data: AttendanceRecord) {
+    // Changed to AttendanceRecord type
     if (!editingRecord) return;
 
     const payload = {
@@ -193,38 +194,41 @@ export default function KehadiranPage() {
       fullName: data.fullName,
       attendanceDate: new Date(data.attendanceDate).toISOString(),
     };
-    
+
     try {
-      const token = localStorage.getItem('auth-token');
+      const token = localStorage.getItem("auth-token");
       const response = await fetch(`/api/kehadiran/${editingRecord.id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update attendance');
+        throw new Error(errorData.error || "Failed to update attendance");
       }
 
       const resultRecord: AttendanceRecord = await response.json();
-      setAttendanceData(prev => prev.map(r => r.id === editingRecord.id ? resultRecord : r));
-      
+      setAttendanceData((prev) =>
+        prev.map((r) => (r.id === editingRecord.id ? resultRecord : r))
+      );
+
       setEditingRecord(null);
       setIsEditDialogOpen(false);
       toast({
-          title: "Sukses",
-          description: "Data kehadiran berhasil diperbarui.",
+        title: "Sukses",
+        description: "Data kehadiran berhasil diperbarui.",
       });
     } catch (error: any) {
       console.error("Error updating attendance:", error);
       toast({
         variant: "destructive",
         title: "Gagal Memperbarui Data",
-        description: error.message || "Terjadi kesalahan saat memperbarui data kehadiran.",
+        description:
+          error.message || "Terjadi kesalahan saat memperbarui data kehadiran.",
       });
     }
   }
@@ -240,16 +244,18 @@ export default function KehadiranPage() {
     }
 
     const dataToExport = attendanceData.map((row) => ({
-        "Timestamp": new Date(row.timestamp).toLocaleString("id-ID"),
-        "Nama Posyandu": row.posyanduName,
-        "Nama Lengkap": row.fullName,
-        "Tanggal Kehadiran": format(new Date(row.attendanceDate), "yyyy-MM-dd", { locale: id }),
+      Timestamp: new Date(row.timestamp).toLocaleString("id-ID"),
+      "Nama Posyandu": row.posyanduName,
+      "Nama Lengkap": row.fullName,
+      "Tanggal Kehadiran": format(new Date(row.attendanceDate), "yyyy-MM-dd", {
+        locale: id,
+      }),
     }));
-    
+
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Data Kehadiran");
-    
+
     XLSX.writeFile(workbook, "data_kehadiran_posyandu.xlsx");
 
     toast({
@@ -347,15 +353,19 @@ export default function KehadiranPage() {
   //     </Form>
   // )
 
+  // Handle permission denial after loading check.
   if (!canView) {
-      return (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-              <h1 className="text-2xl font-bold">Akses Ditolak</h1>
-              <p className="text-muted-foreground">Anda tidak memiliki izin untuk melihat halaman ini.</p>
-          </div>
-      )
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center">
+        <h1 className="text-2xl font-bold">Akses Ditolak</h1>
+        <p className="text-muted-foreground">
+          Anda tidak memiliki izin untuk melihat halaman ini.
+        </p>
+      </div>
+    );
   }
 
+  // Render the component if user has permission
   return (
     <>
       <div className="flex flex-col gap-8">
@@ -369,14 +379,22 @@ export default function KehadiranPage() {
             </p>
           </div>
           {canExport && (
-            <Button onClick={handleExport}>
+            <Button
+              onClick={handleExport}
+              className="bg-[#5D1451] hover:bg-[#4A1040] text-white"
+            >
               <Download className="mr-2 h-4 w-4" />
               Export ke XLSX
             </Button>
           )}
         </header>
 
-        <div className={cn("grid grid-cols-1 gap-12", canCreate && "lg:grid-cols-5")}>
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-12",
+            canCreate && "lg:grid-cols-5"
+          )}
+        >
           {canCreate && (
             <div className="lg:col-span-2">
               <Card className="shadow-lg">
@@ -387,13 +405,15 @@ export default function KehadiranPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button 
-                        onClick={handleRecordAttendance} 
-                        className="w-full"
-                        disabled={hasAttendedToday} // Disable button if already attended
-                    >
-                        {hasAttendedToday ? 'Sudah Hadir Hari Ini' : 'Catat Kehadiran'}
-                    </Button>
+                  <Button
+                    onClick={handleRecordAttendance}
+                    className="w-full bg-[#5D1451] hover:bg-[#4A1040] text-white"
+                    disabled={hasAttendedToday} // Disable button if already attended
+                  >
+                    {hasAttendedToday
+                      ? "Sudah Hadir Hari Ini"
+                      : "Catat Kehadiran"}
+                  </Button>
                 </CardContent>
               </Card>
             </div>
@@ -424,11 +444,9 @@ export default function KehadiranPage() {
                         attendanceData.map((record) => (
                           <TableRow key={record.id}>
                             <TableCell className="whitespace-nowrap">
-                              {format(
-                                new Date(record.timestamp),
-                                "Pp",
-                                { locale: id }
-                              )}
+                              {format(new Date(record.timestamp), "Pp", {
+                                locale: id,
+                              })}
                             </TableCell>
                             <TableCell>{record.posyanduName}</TableCell>
                             <TableCell>{record.fullName}</TableCell>
@@ -437,17 +455,18 @@ export default function KehadiranPage() {
                                 locale: id,
                               })}
                             </TableCell>
-                             {canEdit && (
-                                <TableCell>
-                                    <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleEditClick(record)}
-                                    >
-                                    <Edit className="h-4 w-4" />
-                                    </Button>
-                                </TableCell>
-                             )}
+                            {canEdit && (
+                              <TableCell>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEditClick(record)}
+                                  className="border-[#5D1451] text-[#5D1451] hover:bg-[#5D1451] hover:text-white"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            )}
                           </TableRow>
                         ))
                       ) : (
@@ -468,54 +487,79 @@ export default function KehadiranPage() {
           </div>
         </div>
       </div>
-      
+
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Edit Data Kehadiran</DialogTitle>
-                <DialogDescription>
-                    Perbarui informasi kehadiran di bawah ini.
-                </DialogDescription>
-            </DialogHeader>
-            {/* Edit form content */}
-            <div className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="editPosyanduName">Nama Posyandu</Label>
-                    <Input 
-                        id="editPosyanduName" 
-                        type="text" 
-                        value={editingRecord?.posyanduName || ''} 
-                        onChange={(e) => setEditingRecord(prev => prev ? { ...prev, posyanduName: e.target.value } : null)} 
-                    />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="editFullName">Nama Lengkap</Label>
-                    <Input 
-                        id="editFullName" 
-                        type="text" 
-                        value={editingRecord?.fullName || ''} 
-                        onChange={(e) => setEditingRecord(prev => prev ? { ...prev, fullName: e.target.value } : null)} 
-                    />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="editAttendanceDate">Tanggal Kehadiran</Label>
-                    <Input 
-                        id="editAttendanceDate" 
-                        type="date" 
-                        value={editingRecord?.attendanceDate ? format(new Date(editingRecord.attendanceDate), 'yyyy-MM-dd') : ''} 
-                        onChange={(e) => setEditingRecord(prev => prev ? { ...prev, attendanceDate: e.target.value } : null)} 
-                    />
-                </div>
+          <DialogHeader>
+            <DialogTitle>Edit Data Kehadiran</DialogTitle>
+            <DialogDescription>
+              Perbarui informasi kehadiran di bawah ini.
+            </DialogDescription>
+          </DialogHeader>
+          {/* Edit form content */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="editPosyanduName">Nama Posyandu</Label>
+              <Input
+                id="editPosyanduName"
+                type="text"
+                value={editingRecord?.posyanduName || ""}
+                onChange={(e) =>
+                  setEditingRecord((prev) =>
+                    prev ? { ...prev, posyanduName: e.target.value } : null,
+                  )
+                }
+              />
             </div>
-            <DialogFooter>
-                <Button onClick={() => setIsEditDialogOpen(false)} variant="outline">
-                    Batal
-                </Button>
-                <Button onClick={() => onSaveEditSubmit(editingRecord!)}> {/* Pass editingRecord to onSaveEditSubmit */}
-                    Simpan Perubahan
-                </Button>
-            </DialogFooter>
+            <div className="space-y-2">
+              <Label htmlFor="editFullName">Nama Lengkap</Label>
+              <Input
+                id="editFullName"
+                type="text"
+                value={editingRecord?.fullName || ""}
+                onChange={(e) =>
+                  setEditingRecord((prev) =>
+                    prev ? { ...prev, fullName: e.target.value } : null,
+                  )
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editAttendanceDate">Tanggal Kehadiran</Label>
+              <Input
+                id="editAttendanceDate"
+                type="date"
+                value={
+                  editingRecord?.attendanceDate
+                    ? format(new Date(editingRecord.attendanceDate), "yyyy-MM-dd")
+                    : ""
+                }
+                onChange={(e) =>
+                  setEditingRecord((prev) =>
+                    prev ? { ...prev, attendanceDate: e.target.value } : null,
+                  )
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setIsEditDialogOpen(false)}
+              variant="outline"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={() => onSaveEditSubmit(editingRecord!)}
+              className="bg-[#5D1451] hover:bg-[#4A1040] text-white"
+            >
+              {" "}
+              {/* Pass editingRecord to onSaveEditSubmit */}
+              Simpan Perubahan
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       <Toaster />

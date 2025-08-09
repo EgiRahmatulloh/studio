@@ -129,8 +129,9 @@ export default function KegiatanPage() {
     null
   );
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { toast } = useToast();
-  const { hasPermission, user } = useAuth();
+  const { hasPermission, user, loading } = useAuth();
 
   const canCreate = hasPermission("create_kegiatan");
   const canExport = hasPermission("export_data");
@@ -139,10 +140,10 @@ export default function KegiatanPage() {
 
   useEffect(() => {
     setIsClient(true);
-    if (canView) {
+    if (!loading && user && canView) {
       fetchActivities();
     }
-  }, [user, canView]);
+  }, [user, canView, loading]);
 
   useEffect(() => {
     if (editingRecord) {
@@ -441,7 +442,7 @@ export default function KegiatanPage() {
                       <Button
                         variant={"outline"}
                         className={cn(
-                          "w-full justify-start text-left font-normal",
+                          "w-full justify-start text-left font-normal border-[#5D1451] text-[#5D1451] hover:bg-[#5D1451] hover:text-white",
                           !field.value && "text-muted-foreground"
                         )}
                       >
@@ -471,271 +472,275 @@ export default function KegiatanPage() {
             )}
           />
           <Separator />
-          <div>
-            <h3 className="mb-4 text-lg font-medium">Jumlah Sasaran</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="sasaranBayi"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bayi</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="sasaranBalita"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Balita</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="sasaranBumil"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bumil</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="sasaranBufas"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bufas</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="sasaranBusu"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Busu</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="sasaranRemaja"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Remaja</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="sasaranDewasa"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Dewasa</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="sasaranLansia"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Lansia</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Kolom Kiri - Jumlah Sasaran */}
+            <div>
+              <h3 className="mb-4 text-lg font-medium">Jumlah Sasaran</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="sasaranBayi"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bayi</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="sasaranBalita"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Balita</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="sasaranBumil"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bumil</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="sasaranBufas"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bufas</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="sasaranBusu"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Busu</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="sasaranRemaja"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Remaja</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="sasaranDewasa"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dewasa</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="sasaranLansia"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lansia</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
-          </div>
-          <Separator />
-          <div>
-            <h3 className="mb-4 text-lg font-medium">Pengunjung</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="pengunjungBayi"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bayi</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="pengunjungBalita"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Balita</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="pengunjungBumil"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bumil</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="pengunjungBufas"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bufas</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="pengunjungBusu"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Busu</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="pengunjungRemaja"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Remaja</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="pengunjungDewasa"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Dewasa</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="pengunjungLansia"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Lansia</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+
+            {/* Kolom Kanan - Pengunjung */}
+            <div>
+              <h3 className="mb-4 text-lg font-medium">Pengunjung</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="pengunjungBayi"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bayi</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pengunjungBalita"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Balita</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pengunjungBumil"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bumil</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pengunjungBufas"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bufas</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pengunjungBusu"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Busu</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pengunjungRemaja"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Remaja</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pengunjungDewasa"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dewasa</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pengunjungLansia"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lansia</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
           </div>
           <Separator />
@@ -787,12 +792,25 @@ export default function KegiatanPage() {
               Catat dan kelola data kegiatan Posyandu.
             </p>
           </div>
-          {canExport && (
-            <Button onClick={handleExport}>
-              <Download className="mr-2 h-4 w-4" />
-              Export ke XLSX
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {canCreate && (
+              <Button
+                onClick={() => setIsCreateDialogOpen(true)}
+                className="bg-[#5D1451] hover:bg-[#4A1040] text-white"
+              >
+                + Tambah Kegiatan
+              </Button>
+            )}
+            {canExport && (
+              <Button
+                onClick={handleExport}
+                className="bg-[#5D1451] hover:bg-[#4A1040] text-white"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export ke XLSX
+              </Button>
+            )}
+          </div>
         </header>
 
         <div
@@ -801,30 +819,39 @@ export default function KegiatanPage() {
             canCreate && "lg:grid-cols-5"
           )}
         >
-          {canCreate && (
-            <div className="lg:col-span-2">
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>Catat Kegiatan Baru</CardTitle>
+          {/* Formulir Catat Kegiatan Baru dipindah ke modal */}
+          <div className={cn(canCreate ? "lg:col-span-5" : "lg:col-span-5")}>
+            {/* Create Dialog */}
+            <Dialog
+              open={isCreateDialogOpen}
+              onOpenChange={setIsCreateDialogOpen}
+            >
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Catat Kegiatan Baru</DialogTitle>
                   <CardDescription>
                     Isi formulir untuk melaporkan kegiatan baru.
                   </CardDescription>
-                </CardHeader>
+                </DialogHeader>
                 {renderForm(false)}
-                <CardFooter>
+                <DialogFooter>
+                  <Button
+                    onClick={() => setIsCreateDialogOpen(false)}
+                    variant="outline"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    Batal
+                  </Button>
                   <Button
                     type="submit"
                     form="create-kegiatan-form"
-                    className="w-full"
+                    className="bg-[#5D1451] hover:bg-[#4A1040] text-white"
                   >
                     Simpan Kegiatan
                   </Button>
-                </CardFooter>
-              </Card>
-            </div>
-          )}
-
-          <div className={cn(canCreate ? "lg:col-span-3" : "lg:col-span-5")}>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle>Data Kegiatan</CardTitle>
@@ -861,7 +888,12 @@ export default function KegiatanPage() {
                             </TableCell>
                             <TableCell>
                               {record.fotoUrl ? (
-                                <Button asChild variant="outline" size="sm">
+                                <Button
+                                  asChild
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-[#5D1451] text-[#5D1451] hover:bg-[#5D1451] hover:text-white"
+                                >
                                   <Link
                                     href={record.fotoUrl}
                                     target="_blank"
@@ -880,6 +912,7 @@ export default function KegiatanPage() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleEditClick(record)}
+                                  className="border-[#5D1451] text-[#5D1451] hover:bg-[#5D1451] hover:text-white"
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
@@ -917,10 +950,15 @@ export default function KegiatanPage() {
             <Button
               onClick={() => setIsEditDialogOpen(false)}
               variant="outline"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               Batal
             </Button>
-            <Button type="submit" form="edit-kegiatan-form">
+            <Button
+              type="submit"
+              form="edit-kegiatan-form"
+              className="bg-[#5D1451] hover:bg-[#4A1040] text-white"
+            >
               Simpan Perubahan
             </Button>
           </DialogFooter>
