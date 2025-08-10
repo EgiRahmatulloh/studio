@@ -16,6 +16,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, Activity, User, Shield } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 export default function DashboardPage() {
   const { user, loading: authLoading, hasPermission } = useAuth();
@@ -23,6 +33,8 @@ export default function DashboardPage() {
   const [totalKehadiran, setTotalKehadiran] = useState(0);
   const [totalKegiatan, setTotalKegiatan] = useState(0);
   const [loadingData, setLoadingData] = useState(true);
+  const [chartDataPengunjung, setChartDataPengunjung] = useState<any[]>([]);
+  const [chartDataSasaran, setChartDataSasaran] = useState<any[]>([]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -64,6 +76,37 @@ export default function DashboardPage() {
         if (kegiatanRes && kegiatanRes.ok) {
           const kegiatanData = await kegiatanRes.json();
           setTotalKegiatan(kegiatanData.length);
+
+          // Process data for Pengunjung chart
+          const pengunjungData = kegiatanData.map(
+            (item: any, index: number) => ({
+              id: index + 1,
+              Bayi: item.pengunjungBayi || 0,
+              Balita: item.pengunjungBalita || 0,
+              Bumil: item.pengunjungBumil || 0,
+              Bufas: item.pengunjungBufas || 0,
+              Busu: item.pengunjungBusu || 0,
+              Remaja: item.pengunjungRemaja || 0,
+              Dewasa: item.pengunjungDewasa || 0,
+              Lansia: item.pengunjungLansia || 0,
+            })
+          );
+
+          // Process data for Sasaran chart
+          const sasaranData = kegiatanData.map((item: any, index: number) => ({
+            id: index + 1,
+            Bayi: item.sasaranBayi || 0,
+            Balita: item.sasaranBalita || 0,
+            Bumil: item.sasaranBumil || 0,
+            Bufas: item.sasaranBufas || 0,
+            Busu: item.sasaranBusu || 0,
+            Remaja: item.sasaranRemaja || 0,
+            Dewasa: item.sasaranDewasa || 0,
+            Lansia: item.sasaranLansia || 0,
+          }));
+
+          setChartDataPengunjung(pengunjungData.slice(-10)); // Last 10 records
+          setChartDataSasaran(sasaranData.slice(-10)); // Last 10 records
         }
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
@@ -106,63 +149,23 @@ export default function DashboardPage() {
         <p className="text-muted-foreground">Selamat datang, {user.email}!</p>
       </header>
 
-      {/* User Info Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Informasi Akun
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Email:</span>
-              <span className="text-sm">{user.email}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Role:</span>
-              <Badge variant={user.role === "ADMIN" ? "default" : "secondary"}>
-                <Shield className="w-3 h-3 mr-1" />
-                {user.role}
-              </Badge>
-            </div>
-            {user.permissions.length > 0 && (
-              <div className="space-y-2 pt-2">
-                <span className="text-sm font-medium">Permissions:</span>
-                <div className="flex flex-wrap gap-1">
-                  {user.permissions.map((permission) => (
-                    <Badge
-                      key={permission}
-                      variant="outline"
-                      className="text-xs"
-                    >
-                      {permission}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Statistics Cards - Full Width */}
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         {hasPermission("view_kehadiran") && (
-          <Card>
+          <Card className="flex-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-lg font-medium">
                 Total Kehadiran
               </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               {loadingData ? (
                 <Skeleton className="h-8 w-1/2" />
               ) : (
-                <div className="text-2xl font-bold">{totalKehadiran}</div>
+                <div className="text-3xl font-bold">{totalKehadiran}</div>
               )}
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground mt-2">
                 Total seluruh catatan kehadiran kader.
               </p>
             </CardContent>
@@ -178,20 +181,20 @@ export default function DashboardPage() {
           </Card>
         )}
         {hasPermission("view_kegiatan") && (
-          <Card>
+          <Card className="flex-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-lg font-medium">
                 Total Kegiatan
               </CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
+              <Activity className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               {loadingData ? (
                 <Skeleton className="h-8 w-1/2" />
               ) : (
-                <div className="text-2xl font-bold">{totalKegiatan}</div>
+                <div className="text-3xl font-bold">{totalKegiatan}</div>
               )}
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground mt-2">
                 Total seluruh laporan kegiatan posyandu.
               </p>
             </CardContent>
@@ -208,6 +211,190 @@ export default function DashboardPage() {
         )}
       </div>
 
+      {/* Charts Section */}
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        {/* Pengunjung Chart */}
+        {hasPermission("view_kegiatan") && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Jumlah Pengunjung
+              </CardTitle>
+              <CardDescription>
+                Tren pengunjung per kategori (10 data terakhir)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingData ? (
+                <Skeleton className="h-64 w-full" />
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={chartDataPengunjung}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="id"
+                      label={{
+                        value: "Data ke-",
+                        position: "insideBottom",
+                        offset: -5,
+                      }}
+                    />
+                    <YAxis
+                      label={{
+                        value: "Jumlah",
+                        angle: -90,
+                        position: "insideLeft",
+                      }}
+                    />
+                    <Tooltip />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="Bayi"
+                      stroke="#ff7300"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Balita"
+                      stroke="#0088fe"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Bumil"
+                      stroke="#00c49f"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Bufas"
+                      stroke="#ffbb28"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Busu"
+                      stroke="#8884d8"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Remaja"
+                      stroke="#82ca9d"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Dewasa"
+                      stroke="#ffc658"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Lansia"
+                      stroke="#ff7c7c"
+                      strokeWidth={2}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Sasaran Chart */}
+        {hasPermission("view_kegiatan") && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Sasaran
+              </CardTitle>
+              <CardDescription>
+                Tren sasaran per kategori (10 data terakhir)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingData ? (
+                <Skeleton className="h-64 w-full" />
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={chartDataSasaran}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="id"
+                      label={{
+                        value: "Data ke-",
+                        position: "insideBottom",
+                        offset: -5,
+                      }}
+                    />
+                    <YAxis
+                      label={{
+                        value: "Jumlah",
+                        angle: -90,
+                        position: "insideLeft",
+                      }}
+                    />
+                    <Tooltip />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="Bayi"
+                      stroke="#ff7300"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Balita"
+                      stroke="#0088fe"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Bumil"
+                      stroke="#00c49f"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Bufas"
+                      stroke="#ffbb28"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Busu"
+                      stroke="#8884d8"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Remaja"
+                      stroke="#82ca9d"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Dewasa"
+                      stroke="#ffc658"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Lansia"
+                      stroke="#ff7c7c"
+                      strokeWidth={2}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

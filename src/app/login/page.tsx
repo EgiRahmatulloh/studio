@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import Head from "next/head";
+import Image from "next/image";
 
 export default function LoginPage() {
   // Semua hooks harus dipanggil di bagian atas komponen, sebelum return kondisional
@@ -91,21 +92,14 @@ export default function LoginPage() {
           style={{ background: "#5D1451" }}
         >
           <div className="text-center text-white">
-            <div className="w-24 h-24 sm:w-32 sm:h-32 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-              <svg
-                className="w-12 h-12 sm:w-20 sm:h-20 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                ></path>
-              </svg>
+            <div className="w-28 h-28 sm:w-40 sm:h-40 bg-white rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 p-4">
+              <Image
+                src="/images/LOGO POSYANDU.png"
+                alt="Logo Posyandu"
+                width={120}
+                height={120}
+                className="w-full h-full object-contain"
+              />
             </div>
             <h1 className="text-2xl sm:text-4xl font-bold text-white mb-2">
               SIPOPAY
@@ -130,7 +124,7 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Dedicated space for error message that's always present */}
-              <div className="min-h-[40px]">
+              <div className="min-h-[5px]">
                 {error && (
                   <Alert variant="destructive" className="text-sm rounded-lg">
                     <AlertDescription>{error}</AlertDescription>

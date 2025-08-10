@@ -44,6 +44,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -61,6 +68,16 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+
+// Daftar nama posyandu
+const POSYANDU_NAMES = [
+  "DAHLIA",
+  "KENANGA I", 
+  "MAWAR MERAH",
+  "CEMPAKA",
+  "KENANGA II",
+  "MELATI"
+];
 
 const numberSchema = z.preprocess(
   (a: unknown) =>
@@ -185,7 +202,7 @@ export default function KegiatanPage() {
   const form = useForm<ActivityFormValues>({
     resolver: zodResolver(activitySchema),
     defaultValues: {
-      posyanduName: "",
+      posyanduName: user?.posyanduName || "",
       activityDate: new Date(),
       sasaranBalita: 0,
       sasaranBumil: 0,
@@ -206,6 +223,13 @@ export default function KegiatanPage() {
       kegiatanFoto: "",
     },
   });
+
+  // Update form when user data changes
+  useEffect(() => {
+    if (user?.posyanduName) {
+      form.setValue("posyanduName", user.posyanduName);
+    }
+  }, [user?.posyanduName, form]);
 
   const handleEditClick = (record: ActivityRecord) => {
     setEditingRecord(record);
@@ -416,7 +440,7 @@ export default function KegiatanPage() {
         onSubmit={form.handleSubmit(onSaveSubmit)}
         id={isEdit ? "edit-kegiatan-form" : "create-kegiatan-form"}
       >
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 bg-gray-50 border border-gray-200 rounded-lg p-6">
           <FormField
             control={form.control}
             name="posyanduName"
@@ -424,7 +448,28 @@ export default function KegiatanPage() {
               <FormItem>
                 <FormLabel>Nama Posyandu</FormLabel>
                 <FormControl>
-                  <Input placeholder="Contoh: Posyandu Melati 1" {...field} />
+                  {user?.role === "ADMIN" ? (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih Posyandu" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {POSYANDU_NAMES.map((name) => (
+                          <SelectItem key={name} value={name}>
+                            {name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input 
+                      {...field} 
+                      readOnly 
+                      disabled
+                      className="bg-gray-100 cursor-not-allowed"
+                      placeholder="Nama Posyandu Anda"
+                    />
+                  )}
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -941,9 +986,12 @@ export default function KegiatanPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Data Kegiatan</DialogTitle>
+            <CardDescription>
+              Edit formulir kegiatan yang sudah tersimpan.
+            </CardDescription>
           </DialogHeader>
           {renderForm(true)}
           <DialogFooter>

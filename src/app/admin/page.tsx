@@ -41,6 +41,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2, Edit, UserPlus, FilePlus } from "lucide-react";
 
+// Daftar nama posyandu
+const POSYANDU_NAMES = [
+  "DAHLIA",
+  "KENANGA I", 
+  "MAWAR MERAH",
+  "CEMPAKA",
+  "KENANGA II",
+  "MELATI"
+];
+
 interface User {
   id: string;
   email: string;
@@ -345,15 +355,23 @@ export default function AdminPage() {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="posyanduName">Nama Posyandu</Label>
-                  <Input
-                    id="posyanduName"
-                    type="text"
+                  <Select
                     value={newUser.posyanduName}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, posyanduName: e.target.value })
-                    }
-                    placeholder="Contoh: Posyandu Melati 1"
-                  />
+                    onValueChange={(value) =>
+                      setNewUser({ ...newUser, posyanduName: value })
+                    }q
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih Posyandu" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {POSYANDU_NAMES.map((name) => (
+                        <SelectItem key={name} value={name}>
+                          {name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="role">Role</Label>
@@ -485,14 +503,23 @@ export default function AdminPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="editPosyanduName">Nama Posyandu</Label>
-              <Input
-                id="editPosyanduName"
-                type="text"
+              <Select
                 value={editUser.posyanduName}
-                onChange={(e) =>
-                  setEditUser({ ...editUser, posyanduName: e.target.value })
+                onValueChange={(value) =>
+                  setEditUser({ ...editUser, posyanduName: value })
                 }
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih Posyandu" />
+                </SelectTrigger>
+                <SelectContent>
+                  {POSYANDU_NAMES.map((name) => (
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid gap-2">

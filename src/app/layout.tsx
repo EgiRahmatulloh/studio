@@ -14,6 +14,11 @@ export const metadata: Metadata = {
   title: "SIPOPAY - Sistem Informasi Posyandu",
   description:
     "Aplikasi untuk pengelolaan data kehadiran dan kegiatan posyandu",
+  icons: {
+    icon: "/images/LOGO POSYANDU.png",
+    shortcut: "/images/LOGO POSYANDU.png",
+    apple: "/images/LOGO POSYANDU.png",
+  },
 };
 
 export default function RootLayout({
