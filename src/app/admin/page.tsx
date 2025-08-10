@@ -359,7 +359,7 @@ export default function AdminPage() {
                     value={newUser.posyanduName}
                     onValueChange={(value) =>
                       setNewUser({ ...newUser, posyanduName: value })
-                    }q
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih Posyandu" />
