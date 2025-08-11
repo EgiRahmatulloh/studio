@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client/edge';
+import { PrismaNeon } from '@prisma/adapter-neon';
 
 declare global {
   // allow global `var` declarations
@@ -6,9 +7,14 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
+const connectionString = `${process.env.DATABASE_URL}`;
+
+const adapter = new PrismaNeon({ connectionString });
+
 export const prisma =
   global.prisma ||
   new PrismaClient({
+    adapter,
     log: ['query'],
   });
 
