@@ -1,4 +1,4 @@
-import { PrismaClient } from '../generated/prisma';
+import { PrismaClient } from '@prisma/client';
 import { createUser, createPermission, updateUser } from '../lib/auth';
 
 const prisma = new PrismaClient();
