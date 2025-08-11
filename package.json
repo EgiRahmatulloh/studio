@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "db:seed": "tsx src/scripts/seed.ts",
     "db:migrate": "prisma migrate dev",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
