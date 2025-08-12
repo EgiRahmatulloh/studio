@@ -1,8 +1,8 @@
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('ADMIN', 'USER');
+CREATE TYPE "public"."Role" AS ENUM ('ADMIN', 'USER');
 
 -- CreateTable
-CREATE TABLE "activity_records" (
+CREATE TABLE "public"."activity_records" (
     "id" TEXT NOT NULL,
     "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "posyanduName" TEXT NOT NULL,
@@ -11,7 +11,6 @@ CREATE TABLE "activity_records" (
     "sasaran_bumil" INTEGER NOT NULL,
     "sasaran_remaja" INTEGER NOT NULL,
     "sasaran_lansia" INTEGER NOT NULL,
-    "sasaran_bufus" INTEGER NOT NULL,
     "sasaran_busu" INTEGER NOT NULL,
     "sasaran_bayi" INTEGER NOT NULL,
     "sasaran_dewasa" INTEGER NOT NULL,
@@ -19,19 +18,18 @@ CREATE TABLE "activity_records" (
     "pengunjung_bumil" INTEGER NOT NULL,
     "pengunjung_remaja" INTEGER NOT NULL,
     "pengunjung_lansia" INTEGER NOT NULL,
-    "pengunjung_bufus" INTEGER NOT NULL,
     "pengunjung_busu" INTEGER NOT NULL,
     "pengunjung_bayi" INTEGER NOT NULL,
     "pengunjung_dewasa" INTEGER NOT NULL,
-    "total_sasaran" INTEGER NOT NULL,
-    "total_pengunjung" INTEGER NOT NULL,
     "foto_url" TEXT,
+    "pengunjung_bufas" INTEGER NOT NULL,
+    "sasaran_bufas" INTEGER NOT NULL,
 
     CONSTRAINT "activity_records_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "attendance_records" (
+CREATE TABLE "public"."attendance_records" (
     "id" TEXT NOT NULL,
     "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "posyanduName" TEXT NOT NULL,
@@ -42,19 +40,20 @@ CREATE TABLE "attendance_records" (
 );
 
 -- CreateTable
-CREATE TABLE "users" (
+CREATE TABLE "public"."users" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "full_name" TEXT,
     "posyandu_name" TEXT,
     "password" TEXT NOT NULL,
-    "role" "Role" NOT NULL DEFAULT 'USER',
+    "role" "public"."Role" NOT NULL DEFAULT 'USER',
+    "username" TEXT NOT NULL,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "permissions" (
+CREATE TABLE "public"."permissions" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
 
@@ -62,7 +61,7 @@ CREATE TABLE "permissions" (
 );
 
 -- CreateTable
-CREATE TABLE "_PermissionToUser" (
+CREATE TABLE "public"."_PermissionToUser" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
 
@@ -70,16 +69,19 @@ CREATE TABLE "_PermissionToUser" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+CREATE UNIQUE INDEX "users_email_key" ON "public"."users"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "permissions_name_key" ON "permissions"("name");
+CREATE UNIQUE INDEX "users_username_key" ON "public"."users"("username");
 
 -- CreateIndex
-CREATE INDEX "_PermissionToUser_B_index" ON "_PermissionToUser"("B");
+CREATE UNIQUE INDEX "permissions_name_key" ON "public"."permissions"("name");
+
+-- CreateIndex
+CREATE INDEX "_PermissionToUser_B_index" ON "public"."_PermissionToUser"("B");
 
 -- AddForeignKey
-ALTER TABLE "_PermissionToUser" ADD CONSTRAINT "_PermissionToUser_A_fkey" FOREIGN KEY ("A") REFERENCES "permissions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."_PermissionToUser" ADD CONSTRAINT "_PermissionToUser_A_fkey" FOREIGN KEY ("A") REFERENCES "public"."permissions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_PermissionToUser" ADD CONSTRAINT "_PermissionToUser_B_fkey" FOREIGN KEY ("B") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "public"."_PermissionToUser" ADD CONSTRAINT "_PermissionToUser_B_fkey" FOREIGN KEY ("B") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
