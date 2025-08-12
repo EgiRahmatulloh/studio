@@ -11,6 +11,7 @@ import {
   Download,
   Link as LinkIcon,
   Edit,
+  PlusCircle,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 
@@ -827,15 +828,15 @@ export default function KegiatanPage() {
 
   return (
     <>
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-8 p-6">
         <header className="flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-between sm:text-left">
           <div>
             <h1 className="font-headline text-3xl font-bold tracking-tight">
               Laporan Kegiatan Posyandu
             </h1>
-            <p className="text-muted-foreground">
+            {/* <p className="text-muted-foreground">
               Catat dan kelola data kegiatan Posyandu.
-            </p>
+            </p> */}
           </div>
           <div className="flex gap-2">
             {canCreate && (
@@ -843,7 +844,8 @@ export default function KegiatanPage() {
                 onClick={() => setIsCreateDialogOpen(true)}
                 className="bg-[#5D1451] hover:bg-[#4A1040] text-white"
               >
-                + Tambah Kegiatan
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Tambah Kegiatan
               </Button>
             )}
             {canExport && (

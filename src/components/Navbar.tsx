@@ -40,13 +40,6 @@ export function Navbar() {
 
   if (!user) return null;
 
-  const getInitials = (fullName: string) => {
-    if (!fullName) return "U";
-    const names = fullName.split(" ");
-    if (names.length === 1) return names[0].slice(0, 2).toUpperCase();
-    return (names[0][0] + (names[1] ? names[1][0] : "")).toUpperCase();
-  };
-
   return (
     <div className="sticky top-0 z-50 w-full flex items-center justify-between px-4 py-3 bg-white shadow-sm border-b">
       {/* Left side - Sidebar trigger on mobile */}
@@ -63,9 +56,9 @@ export function Navbar() {
               className="h-auto p-2 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <Avatar className="h-9 w-9 bg-[#5D1451]">
-                  <AvatarFallback className="text-white font-medium">
-                    {getInitials(user.fullName || "User")}
+                <Avatar className="h-9 w-9 bg-gray-100 border-2 border-[#5D1451]">
+                  <AvatarFallback className="text-[#5D1451] bg-gradient-to-br from-purple-50 to-purple-100">
+                    <User className="h-5 w-5" />
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:block text-left">

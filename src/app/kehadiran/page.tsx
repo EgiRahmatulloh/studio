@@ -368,15 +368,15 @@ export default function KehadiranPage() {
   // Render the component if user has permission
   return (
     <>
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-8 p-6">
         <header className="flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-between sm:text-left">
           <div>
             <h1 className="font-headline text-3xl font-bold tracking-tight">
-              Posyandu Attendance Tracker
+              Kehadiran Kader Posyandu
             </h1>
-            <p className="text-muted-foreground">
+            {/* <p className="text-muted-foreground">
               Sistem absensi digital untuk Posyandu
-            </p>
+            </p> */}
           </div>
           {canExport && (
             <Button
@@ -436,7 +436,7 @@ export default function KehadiranPage() {
                         <TableHead>Nama Posyandu</TableHead>
                         <TableHead>Nama Lengkap</TableHead>
                         <TableHead>Tanggal Kehadiran</TableHead>
-                        {canEdit && <TableHead>Aksi</TableHead>}
+                        {/* {canEdit && <TableHead>Aksi</TableHead>} */}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -455,7 +455,7 @@ export default function KehadiranPage() {
                                 locale: id,
                               })}
                             </TableCell>
-                            {canEdit && (
+                            {/* {canEdit && (
                               <TableCell>
                                 <Button
                                   variant="outline"
@@ -466,7 +466,7 @@ export default function KehadiranPage() {
                                   <Edit className="h-4 w-4" />
                                 </Button>
                               </TableCell>
-                            )}
+                            )} */}
                           </TableRow>
                         ))
                       ) : (
@@ -507,7 +507,7 @@ export default function KehadiranPage() {
                 value={editingRecord?.posyanduName || ""}
                 onChange={(e) =>
                   setEditingRecord((prev) =>
-                    prev ? { ...prev, posyanduName: e.target.value } : null,
+                    prev ? { ...prev, posyanduName: e.target.value } : null
                   )
                 }
               />
@@ -520,7 +520,7 @@ export default function KehadiranPage() {
                 value={editingRecord?.fullName || ""}
                 onChange={(e) =>
                   setEditingRecord((prev) =>
-                    prev ? { ...prev, fullName: e.target.value } : null,
+                    prev ? { ...prev, fullName: e.target.value } : null
                   )
                 }
               />
@@ -532,12 +532,15 @@ export default function KehadiranPage() {
                 type="date"
                 value={
                   editingRecord?.attendanceDate
-                    ? format(new Date(editingRecord.attendanceDate), "yyyy-MM-dd")
+                    ? format(
+                        new Date(editingRecord.attendanceDate),
+                        "yyyy-MM-dd"
+                      )
                     : ""
                 }
                 onChange={(e) =>
                   setEditingRecord((prev) =>
-                    prev ? { ...prev, attendanceDate: e.target.value } : null,
+                    prev ? { ...prev, attendanceDate: e.target.value } : null
                   )
                 }
               />

@@ -143,10 +143,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 p-6">
       <header>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Selamat datang, {user.email}!</p>
+        {/* <p className="text-muted-foreground">Selamat datang, {user.email}!</p> */}
       </header>
 
       {/* Statistics Cards - Full Width */}

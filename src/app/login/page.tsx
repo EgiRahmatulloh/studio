@@ -112,25 +112,23 @@ export default function LoginPage() {
 
         {/* Right side - Login Form */}
         <div className="w-full md:w-1/2 p-6 sm:p-8 flex flex-col justify-center">
-          <div className="w-full max-w-md mx-auto space-y-6">
-            <div className="mb-8">
-              <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-3">
-                Login
+          <div className="w-full max-w-md mx-auto space-y-4">
+            <div className="mb-6">
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-2 text-center">
+                Selamat Datang
               </h2>
-              <p className="text-xs sm:text-sm text-gray-600">
-                Masukkan username dan password untuk mengakses aplikasi
+              <p className="text-xs sm:text-sm text-gray-600 text-center">
+                Silakan login untuk melanjutkan ke sistem
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Dedicated space for error message that's always present */}
-              <div className="min-h-[5px]">
-                {error && (
-                  <Alert variant="destructive" className="text-sm rounded-lg">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-              </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Error message */}
+              {error && (
+                <Alert variant="destructive" className="text-sm rounded-lg">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
               <div className="space-y-2">
                 <Label
@@ -142,6 +140,7 @@ export default function LoginPage() {
                 <Input
                   id="username"
                   type="text"
+                  placeholder="Masukkan Username Anda"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -160,6 +159,7 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type="password"
+                  placeholder="Masukkan Password Anda"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -168,7 +168,7 @@ export default function LoginPage() {
                 />
               </div>
 
-              <div className="pt-10">
+              <div className="pt-4">
                 <Button
                   type="submit"
                   className="w-full text-sm sm:text-base py-3 rounded-lg bg-[#5D1451] hover:bg-[#4A1040] text-white font-medium transition-colors"

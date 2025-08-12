@@ -125,32 +125,59 @@ export default function AdminPage() {
 
       if (usersRes.ok) {
         const usersData = await usersRes.json();
-        setUsers(usersData.users);
+        // Ensure we have a valid users array
+        if (usersData && Array.isArray(usersData.users)) {
+          setUsers(usersData.users);
+        } else {
+          console.error("Invalid users data structure:", usersData);
+          setUsers([]);
+          toast({
+            title: "Error",
+            description: "Format data pengguna tidak valid",
+            variant: "destructive",
+          });
+        }
       } else {
         const errorData = await usersRes.json();
+        setUsers([]); // Set empty array on error
         toast({
           title: "Error",
-          description: errorData.error,
+          description: errorData.error || "Gagal memuat data pengguna",
           variant: "destructive",
         });
       }
 
       if (permissionsRes.ok) {
         const permissionsData = await permissionsRes.json();
-        setPermissions(permissionsData.permissions.map((p: any) => p.name));
+        // Ensure we have a valid permissions array
+        if (permissionsData && Array.isArray(permissionsData.permissions)) {
+          setPermissions(permissionsData.permissions.map((p: any) => p.name));
+        } else {
+          console.error("Invalid permissions data structure:", permissionsData);
+          setPermissions([]);
+          toast({
+            title: "Error",
+            description: "Format data permissions tidak valid",
+            variant: "destructive",
+          });
+        }
       } else {
         const errorData = await permissionsRes.json();
+        setPermissions([]); // Set empty array on error
         toast({
           title: "Error",
-          description: errorData.error,
+          description: errorData.error || "Gagal memuat data permissions",
           variant: "destructive",
         });
       }
     } catch (error) {
       console.error("Error fetching data:", error);
+      // Set empty arrays on error to prevent undefined issues
+      setUsers([]);
+      setPermissions([]);
       toast({
         title: "Error",
-        description: "Gagal memuat data",
+        description: "Gagal memuat data admin panel",
         variant: "destructive",
       });
     } finally {
@@ -301,7 +328,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
+    <div className="space-y-6 p-4 p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl sm:text-3xl font-bold">Admin Panel</h1>
         <div className="w-full sm:w-auto">
@@ -455,67 +482,84 @@ export default function AdminPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="text-xs sm:text-sm p-2 sm:p-4">
-                      {user.email}
-                    </TableCell>
-                    <TableCell className="text-xs sm:text-sm p-2 sm:p-4">
-                      {user.username}
-                    </TableCell>
-                    <TableCell className="text-xs sm:text-sm p-2 sm:p-4 hidden md:table-cell">
-                      {user.fullName || "-"}
-                    </TableCell>
-                    <TableCell className="text-xs sm:text-sm p-2 sm:p-4 hidden lg:table-cell">
-                      {user.posyanduName || "-"}
-                    </TableCell>
-                    <TableCell className="p-2 sm:p-4">
-                      <Badge
-                        variant={
-                          user.role === "ADMIN" ? "default" : "secondary"
-                        }
-                        className="text-xs"
-                      >
-                        {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="p-2 sm:p-4 hidden md:table-cell">
-                      <div className="flex flex-wrap gap-1 max-w-xs">
-                        {user.permissions.map((permission) => (
-                          <Badge
-                            key={permission}
-                            variant="outline"
-                            className="text-xs"
-                          >
-                            {permission}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="p-2 sm:p-4">
-                      <div className="flex space-x-1 sm:space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEditClick(user)}
-                          className="border-[#5D1451] text-[#5D1451] hover:bg-[#5D1451] hover:text-white p-1 h-auto sm:p-2"
+                {users && users.length > 0 ? (
+                  users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="text-xs sm:text-sm p-2 sm:p-4">
+                        {user.email}
+                      </TableCell>
+                      <TableCell className="text-xs sm:text-sm p-2 sm:p-4">
+                        {user.username}
+                      </TableCell>
+                      <TableCell className="text-xs sm:text-sm p-2 sm:p-4 hidden md:table-cell">
+                        {user.fullName || "-"}
+                      </TableCell>
+                      <TableCell className="text-xs sm:text-sm p-2 sm:p-4 hidden lg:table-cell">
+                        {user.posyanduName || "-"}
+                      </TableCell>
+                      <TableCell className="p-2 sm:p-4">
+                        <Badge
+                          variant={
+                            user.role === "ADMIN" ? "default" : "secondary"
+                          }
+                          className="text-xs"
                         >
-                          <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                        </Button>
-                        {currentUser?.id !== user.id && (
+                          {user.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="p-2 sm:p-4 hidden md:table-cell">
+                        <div className="flex flex-wrap gap-1 max-w-xs">
+                          {user.permissions && user.permissions.length > 0 ? (
+                            user.permissions.map((permission) => (
+                              <Badge
+                                key={permission}
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {permission}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-gray-500 text-xs">
+                              Tidak ada permissions
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="p-2 sm:p-4">
+                        <div className="flex space-x-1 sm:space-x-2">
                           <Button
                             size="sm"
-                            variant="destructive"
-                            onClick={() => handleDeleteUser(user.id)}
-                            className="p-1 h-auto sm:p-2"
+                            variant="outline"
+                            onClick={() => handleEditClick(user)}
+                            className="border-[#5D1451] text-[#5D1451] hover:bg-[#5D1451] hover:text-white p-1 h-auto sm:p-2"
                           >
-                            <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
-                        )}
-                      </div>
+                          {currentUser?.id !== user.id && (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeleteUser(user.id)}
+                              className="p-1 h-auto sm:p-2"
+                            >
+                              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="text-center py-8 text-gray-500"
+                    >
+                      {loading ? "Memuat data..." : "Tidak ada data pengguna"}
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>
@@ -567,23 +611,32 @@ export default function AdminPage() {
             <div className="grid gap-2">
               <Label>Permissions</Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto rounded-md border p-2">
-                {permissions.map((permission) => (
-                  <div key={permission} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`edit-${permission}`}
-                      checked={editUser.permissions.includes(permission)}
-                      onCheckedChange={(checked) =>
-                        handlePermissionChange(permission, !!checked)
-                      }
-                    />
-                    <Label
-                      htmlFor={`edit-${permission}`}
-                      className="font-normal"
+                {permissions && permissions.length > 0 ? (
+                  permissions.map((permission) => (
+                    <div
+                      key={permission}
+                      className="flex items-center space-x-2"
                     >
-                      {permission}
-                    </Label>
+                      <Checkbox
+                        id={`edit-${permission}`}
+                        checked={editUser.permissions.includes(permission)}
+                        onCheckedChange={(checked) =>
+                          handlePermissionChange(permission, !!checked)
+                        }
+                      />
+                      <Label
+                        htmlFor={`edit-${permission}`}
+                        className="font-normal"
+                      >
+                        {permission}
+                      </Label>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-gray-500 text-sm">
+                    Tidak ada permissions tersedia
                   </div>
-                ))}
+                )}
               </div>
             </div>
             <Button

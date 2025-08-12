@@ -107,12 +107,10 @@ export default function ProfilePage() {
         email: values.email,
       };
 
-      const token = localStorage.getItem("auth-token");
-      const response = await fetch("/api/profile", {
+      const response = await fetch(`/api/admin/users/${user.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(updateData),
       });
@@ -179,12 +177,10 @@ export default function ProfilePage() {
         newPassword: values.newPassword,
       };
 
-      const token = localStorage.getItem("auth-token");
-      const response = await fetch("/api/profile", {
+      const response = await fetch(`/api/admin/users/${user.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(updateData),
       });
@@ -231,9 +227,9 @@ export default function ProfilePage() {
       {/* Header outside the containers */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Profil Pengguna</h1>
-        {/* <p className="text-gray-600 mt-2">
+        <p className="text-gray-600 mt-2">
           Kelola informasi profil dan keamanan akun Anda
-        </p> */}
+        </p>
       </div>
 
       <Form {...form}>
@@ -242,13 +238,13 @@ export default function ProfilePage() {
             {/* Left Container - Personal Information */}
             <Card>
               <CardHeader className="text-center pb-6">
-                {/* <div className="flex justify-center mb-4">
+                <div className="flex justify-center mb-4">
                   <Avatar className="h-20 w-20 bg-gray-200">
                     <AvatarFallback className="text-gray-600">
                       <User className="h-10 w-10" />
                     </AvatarFallback>
                   </Avatar>
-                </div> */}
+                </div>
                 <CardTitle className="text-xl">Informasi Personal</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -318,7 +314,9 @@ export default function ProfilePage() {
                     className="w-full bg-[#5D1451] hover:bg-[#4A1040] text-white"
                     disabled={isLoadingPersonal}
                   >
-                    {isLoadingPersonal ? "Menyimpan..." : "Simpan Perubahan"}
+                    {isLoadingPersonal
+                      ? "Menyimpan..."
+                      : "Simpan Informasi Personal"}
                   </Button>
                 </div>
               </CardContent>
@@ -328,9 +326,9 @@ export default function ProfilePage() {
             <Card>
               <CardHeader className="text-center pb-6">
                 <CardTitle className="text-xl">Keamanan Password</CardTitle>
-                {/* <CardDescription>
+                <CardDescription>
                   Ubah password untuk meningkatkan keamanan akun
-                </CardDescription> */}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Current Password */}
@@ -450,7 +448,9 @@ export default function ProfilePage() {
                     className="w-full bg-[#5D1451] hover:bg-[#4A1040] text-white"
                     disabled={isLoadingPassword}
                   >
-                    {isLoadingPassword ? "Menyimpan..." : "Simpan Perubahan"}
+                    {isLoadingPassword
+                      ? "Menyimpan..."
+                      : "Simpan Keamanan Password"}
                   </Button>
                 </div>
               </CardContent>

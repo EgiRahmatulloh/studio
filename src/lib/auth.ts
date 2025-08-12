@@ -1,13 +1,6 @@
-<<<<<<< HEAD
 import { PrismaClient, Role, Permission } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-=======
-
-import { PrismaClient, Role, Permission } from '@prisma/client';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
->>>>>>> e86ad147531d20e54cae472f1bdbb7a397f27dea
 
 const prisma = new PrismaClient();
 
@@ -183,7 +176,9 @@ export async function getAllUsers(): Promise<AuthUser[]> {
     },
   });
 
-  type UserWithPermissions = Awaited<ReturnType<typeof prisma.user.findMany>>[number];
+  type UserWithPermissions = Awaited<
+    ReturnType<typeof prisma.user.findMany>
+  >[number];
 
   return users.map((user: UserWithPermissions) => ({
     id: user.id,
@@ -192,7 +187,7 @@ export async function getAllUsers(): Promise<AuthUser[]> {
     fullName: user.fullName,
     posyanduName: user.posyanduName,
     role: user.role,
-    permissions: user.permissions.map((p: Permission) => p.name),
+    permissions: user.permissions.map((p: any) => p.name),
   }));
 }
 
