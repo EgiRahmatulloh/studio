@@ -1,13 +1,6 @@
-<<<<<<< HEAD
 import { PrismaClient, Role, Permission } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-=======
-
-import { PrismaClient, Role, Permission } from '@prisma/client';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
->>>>>>> e86ad147531d20e54cae472f1bdbb7a397f27dea
 
 const prisma = new PrismaClient();
 
