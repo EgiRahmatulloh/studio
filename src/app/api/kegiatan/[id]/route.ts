@@ -38,8 +38,8 @@ export const PUT = withPermission('edit_kegiatan', async (req: NextRequest, user
         pengunjungBusu: data.pengunjungBusu,
         pengunjungBayi: data.pengunjungBayi,
         pengunjungDewasa: data.pengunjungDewasa,
-        totalSasaran: data.totalSasaran,
-        totalPengunjung: data.totalPengunjung,
+        // totalSasaran: data.totalSasaran,
+        // totalPengunjung: data.totalPengunjung,
         fotoUrl: data.fotoUrl,
       },
     });

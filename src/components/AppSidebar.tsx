@@ -64,9 +64,9 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar>
-      <SidebarHeader>
-        <div className="p-4 flex justify-between items-center">
+    <Sidebar className="bg-white border-r border-gray-200">
+      <SidebarHeader className="bg-white">
+        <div className="px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-md bg-white flex items-center justify-center p-1.5">
               <Image
@@ -89,12 +89,13 @@ export function AppSidebar() {
           </Button>
         </div>
       </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
+      <SidebarContent className="bg-white">
+        <SidebarMenu className="px-3">
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
               className={cn(
+                "px-6 py-3",
                 isActive("/") &&
                   "bg-[#5D1451]/10 text-[#5D1451] font-medium border-l-4 border-[#5D1451]"
               )}
@@ -113,6 +114,7 @@ export function AppSidebar() {
               <SidebarMenuButton
                 asChild
                 className={cn(
+                  "px-6 py-3",
                   isActive("/kehadiran") &&
                     "bg-[#5D1451]/10 text-[#5D1451] font-medium border-l-4 border-[#5D1451]"
                 )}
@@ -135,6 +137,7 @@ export function AppSidebar() {
               <SidebarMenuButton
                 asChild
                 className={cn(
+                  "px-6 py-3",
                   isActive("/kegiatan") &&
                     "bg-[#5D1451]/10 text-[#5D1451] font-medium border-l-4 border-[#5D1451]"
                 )}
@@ -152,31 +155,12 @@ export function AppSidebar() {
             </SidebarMenuItem>
           )}
 
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className={cn(
-                isActive("/profile") &&
-                  "bg-[#5D1451]/10 text-[#5D1451] font-medium border-l-4 border-[#5D1451]"
-              )}
-            >
-              <Link href="/profile" className="flex items-center">
-                <UserIcon
-                  className={cn(
-                    "mr-3",
-                    isActive("/profile") && "text-[#5D1451]"
-                  )}
-                />
-                Profil
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
           {isAdmin() && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
                 className={cn(
+                  "px-6 py-3",
                   isActive("/admin") &&
                     "bg-[#5D1451]/10 text-[#5D1451] font-medium border-l-4 border-[#5D1451]"
                 )}
@@ -195,8 +179,8 @@ export function AppSidebar() {
           )}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter>
-        <div className="p-4">
+      <SidebarFooter className="bg-white">
+        <div className="px-6 py-4">
           <div className="px-3 py-2 rounded-md bg-gray-100 text-xs text-gray-500 mb-4">
             <p className="font-medium">SIPOPAY v1.0.0</p>
             <p className="mt-1">Sistem Informasi Posyandu</p>

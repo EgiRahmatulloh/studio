@@ -72,11 +72,11 @@ import { useAuth } from "@/contexts/AuthContext";
 // Daftar nama posyandu
 const POSYANDU_NAMES = [
   "DAHLIA",
-  "KENANGA I", 
+  "KENANGA I",
   "MAWAR MERAH",
   "CEMPAKA",
   "KENANGA II",
-  "MELATI"
+  "MELATI",
 ];
 
 const numberSchema = z.preprocess(
@@ -462,9 +462,9 @@ export default function KegiatanPage() {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <Input 
-                      {...field} 
-                      readOnly 
+                    <Input
+                      {...field}
+                      readOnly
                       disabled
                       className="bg-gray-100 cursor-not-allowed"
                       placeholder="Nama Posyandu Anda"

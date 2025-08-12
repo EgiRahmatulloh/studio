@@ -1,21 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { authenticateUser, generateToken } from '@/lib/auth';
+import { NextRequest, NextResponse } from "next/server";
+import { authenticateUser, generateToken } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password } = await req.json();
+    const { username, password } = await req.json();
 
-    if (!email || !password) {
+    if (!username || !password) {
       return NextResponse.json(
-        { error: 'Email dan password harus diisi' },
+        { error: "Username dan password harus diisi" },
         { status: 400 }
       );
     }
 
-    const user = await authenticateUser(email, password);
+    const user = await authenticateUser(username, password);
     if (!user) {
       return NextResponse.json(
-        { error: 'Email atau password salah' },
+        { error: "Username atau password salah" },
         { status: 401 }
       );
     }
@@ -23,10 +23,11 @@ export async function POST(req: NextRequest) {
     const token = generateToken(user);
 
     const response = NextResponse.json({
-      message: 'Login berhasil',
+      message: "Login berhasil",
       user: {
         id: user.id,
         email: user.email,
+        username: user.username,
         fullName: user.fullName,
         posyanduName: user.posyanduName,
         role: user.role,
@@ -36,18 +37,18 @@ export async function POST(req: NextRequest) {
     });
 
     // Set cookie untuk browser
-    response.cookies.set('auth-token', token, {
+    response.cookies.set("auth-token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
       maxAge: 24 * 60 * 60, // 24 jam
     });
 
     return response;
   } catch (error) {
-    console.error('Login error:', error);
+    console.error("Login error:", error);
     return NextResponse.json(
-      { error: 'Terjadi kesalahan server' },
+      { error: "Terjadi kesalahan server" },
       { status: 500 }
     );
   }

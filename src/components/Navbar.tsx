@@ -40,8 +40,11 @@ export function Navbar() {
 
   if (!user) return null;
 
-  const getInitials = (email: string) => {
-    return email.slice(0, 2).toUpperCase();
+  const getInitials = (fullName: string) => {
+    if (!fullName) return "U";
+    const names = fullName.split(" ");
+    if (names.length === 1) return names[0].slice(0, 2).toUpperCase();
+    return (names[0][0] + (names[1] ? names[1][0] : "")).toUpperCase();
   };
 
   return (
@@ -62,34 +65,22 @@ export function Navbar() {
               <div className="flex items-center gap-3">
                 <Avatar className="h-9 w-9 bg-[#5D1451]">
                   <AvatarFallback className="text-white font-medium">
-                    {getInitials(user.email)}
+                    {getInitials(user.fullName || "User")}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden sm:block text-left">
                   <p className="text-sm font-medium text-gray-900 leading-tight">
-                    {user.email}
-                  </p>
-                  <p className="text-xs text-gray-500 leading-tight">
-                    Role: {user.role}
+                    {user.fullName || "User"}
                   </p>
                 </div>
                 <ChevronDown className="h-4 w-4 text-gray-500 hidden sm:block" />
               </div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium">{user.email}</p>
-                <p className="text-xs text-muted-foreground">
-                  Role: {user.role}
-                </p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
+          <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem asChild>
               <button
-                className="cursor-pointer w-full flex items-center"
+                className="cursor-pointer w-full flex items-center hover:bg-[#5D1451] hover:text-white transition-colors"
                 onClick={() => router.push("/profile")}
               >
                 <User className="mr-2 h-4 w-4" />
@@ -99,7 +90,7 @@ export function Navbar() {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <button
-                className="cursor-pointer w-full flex items-center text-red-600"
+                className="cursor-pointer w-full flex items-center text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
                 onClick={handleLogout}
               >
                 <LogOut className="mr-2 h-4 w-4" />

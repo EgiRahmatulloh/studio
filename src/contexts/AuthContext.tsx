@@ -1,13 +1,13 @@
+"use client";
 
-'use client';
-
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 export interface User {
   id: string;
   email: string;
+  username: string;
   fullName?: string | null;
-  role: 'ADMIN' | 'USER';
+  role: "ADMIN" | "USER";
   permissions: string[];
   posyanduName?: string | null;
 }
@@ -16,8 +16,12 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   fetchUser: () => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, role?: 'ADMIN' | 'USER') => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    role?: "ADMIN" | "USER"
+  ) => Promise<void>;
   logout: () => Promise<void>;
   hasPermission: (permission: string) => boolean;
   isAdmin: () => boolean;
@@ -37,52 +41,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUser = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('auth-token');
+      const token = localStorage.getItem("auth-token");
       if (token) {
-        const response = await fetch('/api/auth/me', {
+        const response = await fetch("/api/auth/me", {
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
         } else {
-          localStorage.removeItem('auth-token');
+          localStorage.removeItem("auth-token");
         }
       }
     } catch (error) {
-      console.error('Check auth error:', error);
-      localStorage.removeItem('auth-token');
+      console.error("Check auth error:", error);
+      localStorage.removeItem("auth-token");
     } finally {
       setLoading(false);
     }
   };
 
-  const login = async (email: string, password: string) => {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
+  const login = async (username: string, password: string) => {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ username, password }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Login gagal');
+      throw new Error(data.error || "Login gagal");
     }
 
     setUser(data.user);
-    localStorage.setItem('auth-token', data.token);
+    localStorage.setItem("auth-token", data.token);
   };
 
-  const register = async (email: string, password: string, role: 'ADMIN' | 'USER' = 'USER') => {
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
+  const register = async (
+    email: string,
+    password: string,
+    role: "ADMIN" | "USER" = "USER"
+  ) => {
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ email, password, role }),
     });
@@ -90,34 +98,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Registrasi gagal');
+      throw new Error(data.error || "Registrasi gagal");
     }
-    
+
     setUser(data.user);
-    localStorage.setItem('auth-token', data.token);
+    localStorage.setItem("auth-token", data.token);
   };
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
+      await fetch("/api/auth/logout", {
+        method: "POST",
       });
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     } finally {
       setUser(null);
-      localStorage.removeItem('auth-token');
+      localStorage.removeItem("auth-token");
     }
   };
 
   const hasPermission = (permission: string): boolean => {
     if (!user) return false;
     // Admin has all permissions. For other users, check if the permission is in their list.
-    return user.role === 'ADMIN' || user.permissions.includes(permission);
+    return user.role === "ADMIN" || user.permissions.includes(permission);
   };
 
   const isAdmin = (): boolean => {
-    return user?.role === 'ADMIN' || false;
+    return user?.role === "ADMIN" || false;
   };
 
   const value = {
@@ -137,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

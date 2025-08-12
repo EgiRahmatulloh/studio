@@ -37,7 +37,7 @@ async function main() {
   // Buat admin default
   console.log('👤 Creating default admin user...');
   try {
-    const adminUser = await createUser({ email: 'admin@posyandu.com', password: 'admin123', role: 'ADMIN', fullName: 'Admin Posyandu', posyanduName: 'Kantor Pusat' });
+    const adminUser = await createUser({ email: 'admin@posyandu.com', username: 'admin', password: 'admin123', role: 'ADMIN', fullName: 'Admin Posyandu', posyanduName: 'Kantor Pusat' });
     console.log('✅ Created admin user:', adminUser.email);
   } catch (error: any) {
     if (error.code === 'P2002') {
@@ -50,7 +50,7 @@ async function main() {
   // Buat user demo
   console.log('👤 Creating demo user...');
   try {
-    const demoUser = await createUser({ email: 'user@posyandu.com', password: 'user123', role: 'USER', fullName: 'User Demo Posyandu', posyanduName: 'Posyandu Melati 1' });
+    const demoUser = await createUser({ email: 'user@posyandu.com', username: 'user', password: 'user123', role: 'USER', fullName: 'User Demo Posyandu', posyanduName: 'Posyandu Melati 1' });
     console.log('✅ Created demo user:', demoUser.email);
     
     // Berikan beberapa permissions ke demo user

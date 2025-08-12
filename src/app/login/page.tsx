@@ -13,7 +13,7 @@ import Image from "next/image";
 
 export default function LoginPage() {
   // Semua hooks harus dipanggil di bagian atas komponen, sebelum return kondisional
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,7 +54,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      await login(email, password);
+      await login(username, password);
       toast({
         title: "Login berhasil",
         description: "Selamat datang kembali!",
@@ -118,7 +118,7 @@ export default function LoginPage() {
                 Login
               </h2>
               <p className="text-xs sm:text-sm text-gray-600">
-                Masukkan email dan password untuk mengakses aplikasi
+                Masukkan username dan password untuk mengakses aplikasi
               </p>
             </div>
 
@@ -134,16 +134,16 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <Label
-                  htmlFor="email"
+                  htmlFor="username"
                   className="text-sm sm:text-base font-medium"
                 >
-                  Email
+                  Username
                 </Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   required
                   disabled={isSubmitting}
                   className="text-sm sm:text-base rounded-lg px-4 py-3 border-gray-300 focus:border-[#5D1451] focus:ring-[#5D1451]"

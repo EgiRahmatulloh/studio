@@ -44,16 +44,17 @@ import { Trash2, Edit, UserPlus, FilePlus } from "lucide-react";
 // Daftar nama posyandu
 const POSYANDU_NAMES = [
   "DAHLIA",
-  "KENANGA I", 
+  "KENANGA I",
   "MAWAR MERAH",
   "CEMPAKA",
   "KENANGA II",
-  "MELATI"
+  "MELATI",
 ];
 
 interface User {
   id: string;
   email: string;
+  username: string;
   fullName?: string | null;
   role: "ADMIN" | "USER";
   permissions: string[];
@@ -76,6 +77,7 @@ export default function AdminPage() {
 
   const [newUser, setNewUser] = useState({
     email: "",
+    username: "",
     password: "",
     fullName: "",
     role: "USER" as "ADMIN" | "USER",
@@ -176,6 +178,7 @@ export default function AdminPage() {
         setCreateDialogOpen(false);
         setNewUser({
           email: "",
+          username: "",
           password: "",
           fullName: "",
           role: "USER",
@@ -330,6 +333,19 @@ export default function AdminPage() {
                   />
                 </div>
                 <div className="grid gap-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    value={newUser.username}
+                    onChange={(e) =>
+                      setNewUser({ ...newUser, username: e.target.value })
+                    }
+                    required
+                    placeholder="Contoh: user123"
+                  />
+                </div>
+                <div className="grid gap-2">
                   <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
@@ -359,7 +375,7 @@ export default function AdminPage() {
                     value={newUser.posyanduName}
                     onValueChange={(value) =>
                       setNewUser({ ...newUser, posyanduName: value })
-                    }q
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih Posyandu" />
@@ -415,23 +431,49 @@ export default function AdminPage() {
             <Table className="min-w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-[120px] p-2 sm:p-4">Email</TableHead>
-                  <TableHead className="min-w-[150px] p-2 sm:p-4 hidden md:table-cell">Nama Lengkap</TableHead>
-                  <TableHead className="min-w-[150px] p-2 sm:p-4 hidden lg:table-cell">Nama Posyandu</TableHead>
-                  <TableHead className="min-w-[80px] p-2 sm:p-4">Role</TableHead>
-                  <TableHead className="min-w-[200px] p-2 sm:p-4 hidden md:table-cell">Permissions</TableHead>
-                  <TableHead className="min-w-[100px] p-2 sm:p-4">Aksi</TableHead>
+                  <TableHead className="min-w-[120px] p-2 sm:p-4">
+                    Email
+                  </TableHead>
+                  <TableHead className="min-w-[120px] p-2 sm:p-4">
+                    Username
+                  </TableHead>
+                  <TableHead className="min-w-[150px] p-2 sm:p-4 hidden md:table-cell">
+                    Nama Lengkap
+                  </TableHead>
+                  <TableHead className="min-w-[150px] p-2 sm:p-4 hidden lg:table-cell">
+                    Nama Posyandu
+                  </TableHead>
+                  <TableHead className="min-w-[80px] p-2 sm:p-4">
+                    Role
+                  </TableHead>
+                  <TableHead className="min-w-[200px] p-2 sm:p-4 hidden md:table-cell">
+                    Permissions
+                  </TableHead>
+                  <TableHead className="min-w-[100px] p-2 sm:p-4">
+                    Aksi
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell className="text-xs sm:text-sm p-2 sm:p-4">{user.email}</TableCell>
-                    <TableCell className="text-xs sm:text-sm p-2 sm:p-4 hidden md:table-cell">{user.fullName || "-"}</TableCell>
-                    <TableCell className="text-xs sm:text-sm p-2 sm:p-4 hidden lg:table-cell">{user.posyanduName || "-"}</TableCell>
+                    <TableCell className="text-xs sm:text-sm p-2 sm:p-4">
+                      {user.email}
+                    </TableCell>
+                    <TableCell className="text-xs sm:text-sm p-2 sm:p-4">
+                      {user.username}
+                    </TableCell>
+                    <TableCell className="text-xs sm:text-sm p-2 sm:p-4 hidden md:table-cell">
+                      {user.fullName || "-"}
+                    </TableCell>
+                    <TableCell className="text-xs sm:text-sm p-2 sm:p-4 hidden lg:table-cell">
+                      {user.posyanduName || "-"}
+                    </TableCell>
                     <TableCell className="p-2 sm:p-4">
                       <Badge
-                        variant={user.role === "ADMIN" ? "default" : "secondary"}
+                        variant={
+                          user.role === "ADMIN" ? "default" : "secondary"
+                        }
                         className="text-xs"
                       >
                         {user.role}
