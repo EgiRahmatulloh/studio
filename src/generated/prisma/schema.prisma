@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ActivityRecord {
+  id               String   @id @default(uuid())
+  timestamp        DateTime @default(now())
+  posyanduName     String
+  activityDate     DateTime @map("activity_date")
+  sasaranBalita    Int      @map("sasaran_balita")
+  sasaranBumil     Int      @map("sasaran_bumil")
+  sasaranRemaja    Int      @map("sasaran_remaja")
+  sasaranLansia    Int      @map("sasaran_lansia")
+  sasaranBufas     Int      @map("sasaran_bufas")
+  sasaranBusu      Int      @map("sasaran_busu")
+  sasaranBayi      Int      @map("sasaran_bayi")
+  sasaranDewasa    Int      @map("sasaran_dewasa")
+  pengunjungBalita Int      @map("pengunjung_balita")
+  pengunjungBumil  Int      @map("pengunjung_bumil")
+  pengunjungRemaja Int      @map("pengunjung_remaja")
+  pengunjungLansia Int      @map("pengunjung_lansia")
+  pengunjungBufas  Int      @map("pengunjung_bufas")
+  pengunjungBusu   Int      @map("pengunjung_busu")
+  pengunjungBayi   Int      @map("pengunjung_bayi")
+  pengunjungDewasa Int      @map("pengunjung_dewasa")
+  fotoUrl          String?  @map("foto_url")
+
+  @@map("activity_records")
+}
+
+model AttendanceRecord {
+  id             String   @id @default(uuid())
+  timestamp      DateTime @default(now())
+  posyanduName   String
+  fullName       String   @map("full_name")
+  attendanceDate DateTime @map("attendance_date")
+
+  @@map("attendance_records")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model User {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  fullName     String?      @map("full_name")
+  posyanduName String?      @map("posyandu_name")
+  password     String
+  role         Role         @default(USER)
+  permissions  Permission[]
+
+  @@map("users")
+}
+
+model Permission {
+  id    String @id @default(uuid())
+  name  String @unique
+  users User[]
+
+  @@map("permissions")
+}
