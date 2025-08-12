@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Download, Edit } from "lucide-react";
+import { Calendar as CalendarIcon, Download, Edit } from "lucide-react";
 import * as XLSX from "xlsx";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Card,
   CardContent,
@@ -26,6 +27,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Table,
   TableBody,
@@ -53,7 +59,9 @@ export default function KehadiranPage() {
     null
   );
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [hasAttendedToday, setHasAttendedToday] = useState(false); // New state
+  const [hasAttendedToday, setHasAttendedToday] = useState(false);
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
   const { toast } = useToast();
   const { hasPermission, user, loading } = useAuth();
 
@@ -61,8 +69,6 @@ export default function KehadiranPage() {
     setIsClient(true);
   }, []);
 
-  // Handle loading state first to prevent conditional hook execution issues
-  // that might arise from the useAuth hook.
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -71,23 +77,28 @@ export default function KehadiranPage() {
     );
   }
 
-  // Now that loading is false, we can safely check permissions.
   const canCreate = hasPermission("create_kehadiran");
   const canExport = hasPermission("export_data");
   const canView = hasPermission("view_kehadiran");
   const canEdit = hasPermission("edit_kehadiran");
 
-  // This effect fetches data once permissions are confirmed.
   useEffect(() => {
     if (user && canView) {
       fetchAttendances();
     }
-  }, [user, canView]); // Dependencies are stable after the loading check.
+  }, [user, canView]);
 
-  const fetchAttendances = async () => {
+  const fetchAttendances = async (
+    start?: Date | undefined,
+    end?: Date | undefined
+  ) => {
     try {
       const token = localStorage.getItem("auth-token");
-      const response = await fetch("/api/kehadiran", {
+      const params = new URLSearchParams();
+      if (start) params.append("startDate", start.toISOString());
+      if (end) params.append("endDate", end.toISOString());
+
+      const response = await fetch(`/api/kehadiran?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -99,14 +110,15 @@ export default function KehadiranPage() {
       const data: AttendanceRecord[] = await response.json();
       setAttendanceData(data);
 
-      // Check if user has attended today
-      const today = format(new Date(), "yyyy-MM-dd");
-      const userAttended = data.some(
-        (record) =>
-          record.fullName === user?.fullName &&
-          format(new Date(record.attendanceDate), "yyyy-MM-dd") === today
-      );
-      setHasAttendedToday(userAttended);
+      if (!start && !end) {
+        const today = format(new Date(), "yyyy-MM-dd");
+        const userAttended = data.some(
+          (record) =>
+            record.fullName === user?.fullName &&
+            format(new Date(record.attendanceDate), "yyyy-MM-dd") === today
+        );
+        setHasAttendedToday(userAttended);
+      }
     } catch (error: any) {
       console.error("Error fetching attendances:", error);
       toast({
@@ -118,15 +130,9 @@ export default function KehadiranPage() {
     }
   };
 
-  // Remove useForm and zodResolver as form is removed
-  // const form = useForm<AttendanceFormValues>({
-  //   resolver: zodResolver(attendanceSchema),
-  //   defaultValues: {
-  //     posyanduName: "",
-  //     fullName: "",
-  //     attendanceDate: new Date(),
-  //   },
-  // });
+  const handleFilter = () => {
+    fetchAttendances(startDate, endDate);
+  };
 
   const handleEditClick = (record: AttendanceRecord) => {
     setEditingRecord(record);
@@ -168,7 +174,7 @@ export default function KehadiranPage() {
 
       const resultRecord: AttendanceRecord = await response.json();
       setAttendanceData((prev) => [resultRecord, ...prev]);
-      setHasAttendedToday(true); // Set to true after successful attendance
+      setHasAttendedToday(true);
 
       toast({
         title: "Sukses",
@@ -186,7 +192,6 @@ export default function KehadiranPage() {
   }
 
   async function onSaveEditSubmit(data: AttendanceRecord) {
-    // Changed to AttendanceRecord type
     if (!editingRecord) return;
 
     const payload = {
@@ -233,17 +238,51 @@ export default function KehadiranPage() {
     }
   }
 
-  function handleExport() {
-    if (attendanceData.length === 0) {
+  async function handleExport() {
+    let dataToExport = attendanceData;
+
+    if (startDate || endDate) {
+      try {
+        const token = localStorage.getItem("auth-token");
+        const params = new URLSearchParams();
+        if (startDate) params.append("startDate", startDate.toISOString());
+        if (endDate) params.append("endDate", endDate.toISOString());
+
+        const response = await fetch(`/api/kehadiran?${params.toString()}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.error || "Failed to fetch filtered data for export"
+          );
+        }
+        dataToExport = await response.json();
+      } catch (error: any) {
+        toast({
+          variant: "destructive",
+          title: "Gagal Mengambil Data Ekspor",
+          description:
+            error.message ||
+            "Terjadi kesalahan saat mengambil data yang difilter.",
+        });
+        return;
+      }
+    }
+
+    if (dataToExport.length === 0) {
       toast({
         variant: "destructive",
         title: "Gagal Ekspor",
-        description: "Tidak ada data untuk diekspor.",
+        description: "Tidak ada data untuk diekspor pada rentang tanggal yang dipilih.",
       });
       return;
     }
 
-    const dataToExport = attendanceData.map((row) => ({
+    const formattedData = dataToExport.map((row) => ({
       Timestamp: new Date(row.timestamp).toLocaleString("id-ID"),
       "Nama Posyandu": row.posyanduName,
       "Nama Lengkap": row.fullName,
@@ -252,7 +291,7 @@ export default function KehadiranPage() {
       }),
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Data Kehadiran");
 
@@ -264,96 +303,6 @@ export default function KehadiranPage() {
     });
   }
 
-  // Removed renderForm function as it's no longer needed for creation
-  // const renderForm = (isEdit: boolean) => (
-  //     <Form {...form}>
-  //       <form onSubmit={form.handleSubmit(onSaveSubmit)} id={isEdit ? "edit-kehadiran-form" : "create-kehadiran-form"}>
-  //         <CardContent className="space-y-6">
-  //           <FormField
-  //             control={form.control}
-  //             name="posyanduName"
-  //             render={({ field }) => (
-  //               <FormItem>
-  //                 <FormLabel>Nama Posyandu</FormLabel>
-  //                 <FormControl>
-  //                   <Input
-  //                     placeholder="Contoh: Posyandu Melati 1"
-  //                     {...field}
-  //                   />
-  //                 </FormControl>
-  //                 <FormMessage />
-  //               </FormItem>
-  //             )}
-  //           />
-  //           <FormField
-  //             control={form.control}
-  //             name="fullName"
-  //             render={({ field }) => (
-  //               <FormItem>
-  //                 <FormLabel>Nama Lengkap</FormLabel>
-  //                 <FormControl>
-  //                   <Input
-  //                     placeholder="Contoh: Ibu Budi"
-  //                     {...field}
-  //                   />
-  //                 </FormControl>
-  //                 <FormMessage />
-  //               </FormItem>
-  //             )}
-  //           />
-  //           <FormField
-  //             control={form.control}
-  //             name="attendanceDate"
-  //             render={({ field }) => (
-  //               <FormItem className="flex flex-col">
-  //                 <FormLabel>Tanggal Kehadiran</FormLabel>
-  //                 <Popover>
-  //                   <PopoverTrigger asChild>
-  //                     <FormControl>
-  //                       <Button
-  //                         variant={"outline"}
-  //                         className={cn(
-  //                           "w-full justify-start text-left font-normal",
-  //                           !field.value && "text-muted-foreground"
-  //                         )}
-  //                       >
-  //                         <CalendarIcon className="mr-2 h-4 w-4" />
-  //                         {field.value ? (
-  //                           format(field.value, "PPP", {
-  //                             locale: id,
-  //                           })
-  //                         ) : (
-  //                           <span>Pilih tanggal</span>
-  //                         )}
-  //                       </Button>
-  //                     </FormControl>
-  //                   </PopoverTrigger>
-  //                   <PopoverContent
-  //                     className="w-auto p-0"
-  //                     align="start"
-  //                   >
-  //                     <Calendar
-  //                       mode="single"
-  //                       selected={field.value}
-  //                       onSelect={field.onChange}
-  //                       disabled={(date) =>
-  //                         date > new Date() ||
-  //                         date < new Date("2000-01-01")
-  //                       }
-  //                       initialFocus
-  //                     />
-  //                   </PopoverContent>
-  //                 </Popover>
-  //                 <FormMessage />
-  //               </FormItem>
-  //             )}
-  //           />
-  //         </CardContent>
-  //       </form>
-  //     </Form>
-  // )
-
-  // Handle permission denial after loading check.
   if (!canView) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center">
@@ -365,7 +314,6 @@ export default function KehadiranPage() {
     );
   }
 
-  // Render the component if user has permission
   return (
     <>
       <div className="flex flex-col gap-8 p-6">
@@ -374,9 +322,58 @@ export default function KehadiranPage() {
             <h1 className="font-headline text-3xl font-bold tracking-tight">
               Kehadiran Kader Posyandu
             </h1>
-            {/* <p className="text-muted-foreground">
-              Sistem absensi digital untuk Posyandu
-            </p> */}
+          </div>
+        </header>
+
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-full sm:w-[240px] justify-start text-left font-normal",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, "PPP", { locale: id }) : <span>Tanggal Mulai</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={setStartDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-full sm:w-[240px] justify-start text-left font-normal",
+                    !endDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {endDate ? format(endDate, "PPP", { locale: id }) : <span>Tanggal Selesai</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={setEndDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            <Button onClick={handleFilter} className="bg-[#5D1451] hover:bg-[#4A1040] text-white">
+              Filter
+            </Button>
           </div>
           {canExport && (
             <Button
@@ -387,7 +384,7 @@ export default function KehadiranPage() {
               Export ke XLSX
             </Button>
           )}
-        </header>
+        </div>
 
         <div
           className={cn(
@@ -408,7 +405,7 @@ export default function KehadiranPage() {
                   <Button
                     onClick={handleRecordAttendance}
                     className="w-full bg-[#5D1451] hover:bg-[#4A1040] text-white"
-                    disabled={hasAttendedToday} // Disable button if already attended
+                    disabled={hasAttendedToday}
                   >
                     {hasAttendedToday
                       ? "Sudah Hadir Hari Ini"
@@ -436,7 +433,6 @@ export default function KehadiranPage() {
                         <TableHead>Nama Posyandu</TableHead>
                         <TableHead>Nama Lengkap</TableHead>
                         <TableHead>Tanggal Kehadiran</TableHead>
-                        {/* {canEdit && <TableHead>Aksi</TableHead>} */}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -455,18 +451,6 @@ export default function KehadiranPage() {
                                 locale: id,
                               })}
                             </TableCell>
-                            {/* {canEdit && (
-                              <TableCell>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleEditClick(record)}
-                                  className="border-[#5D1451] text-[#5D1451] hover:bg-[#5D1451] hover:text-white"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            )} */}
                           </TableRow>
                         ))
                       ) : (
@@ -497,7 +481,6 @@ export default function KehadiranPage() {
               Perbarui informasi kehadiran di bawah ini.
             </DialogDescription>
           </DialogHeader>
-          {/* Edit form content */}
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="editPosyanduName">Nama Posyandu</Label>
@@ -558,8 +541,6 @@ export default function KehadiranPage() {
               onClick={() => onSaveEditSubmit(editingRecord!)}
               className="bg-[#5D1451] hover:bg-[#4A1040] text-white"
             >
-              {" "}
-              {/* Pass editingRecord to onSaveEditSubmit */}
               Simpan Perubahan
             </Button>
           </DialogFooter>

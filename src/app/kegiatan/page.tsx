@@ -148,6 +148,8 @@ export default function KegiatanPage() {
   );
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
   const { toast } = useToast();
   const { hasPermission, user, loading } = useAuth();
 
@@ -175,10 +177,14 @@ export default function KegiatanPage() {
     }
   }, [editingRecord]);
 
-  const fetchActivities = async () => {
+  const fetchActivities = async (start?: Date, end?: Date) => {
     try {
       const token = localStorage.getItem("auth-token");
-      const response = await fetch("/api/kegiatan", {
+      const params = new URLSearchParams();
+      if (start) params.append("startDate", start.toISOString());
+      if (end) params.append("endDate", end.toISOString());
+
+      const response = await fetch(`/api/kegiatan?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -198,6 +204,10 @@ export default function KegiatanPage() {
           error.message || "Terjadi kesalahan saat memuat data kegiatan.",
       });
     }
+  };
+
+  const handleFilter = () => {
+    fetchActivities(startDate, endDate);
   };
 
   const form = useForm<ActivityFormValues>({
@@ -225,7 +235,6 @@ export default function KegiatanPage() {
     },
   });
 
-  // Update form when user data changes
   useEffect(() => {
     if (user?.posyanduName) {
       form.setValue("posyanduName", user.posyanduName);
@@ -278,6 +287,7 @@ export default function KegiatanPage() {
       form.reset();
       setEditingRecord(null);
       setIsEditDialogOpen(false);
+      setIsCreateDialogOpen(false);
       toast({
         title: "Sukses",
         description: `Data kegiatan berhasil ${
@@ -299,12 +309,46 @@ export default function KegiatanPage() {
     }
   }
 
-  function handleExport() {
-    if (activityData.length === 0) {
+  async function handleExport() {
+    let dataToExport = activityData;
+
+    if (startDate || endDate) {
+      try {
+        const token = localStorage.getItem("auth-token");
+        const params = new URLSearchParams();
+        if (startDate) params.append("startDate", startDate.toISOString());
+        if (endDate) params.append("endDate", endDate.toISOString());
+
+        const response = await fetch(`/api/kegiatan?${params.toString()}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.error || "Failed to fetch filtered data for export"
+          );
+        }
+        dataToExport = await response.json();
+      } catch (error: any) {
+        toast({
+          variant: "destructive",
+          title: "Gagal Mengambil Data Ekspor",
+          description:
+            error.message ||
+            "Terjadi kesalahan saat mengambil data yang difilter.",
+        });
+        return;
+      }
+    }
+
+    if (dataToExport.length === 0) {
       toast({
         variant: "destructive",
         title: "Gagal Ekspor",
-        description: "Tidak ada data untuk diekspor.",
+        description: "Tidak ada data untuk diekspor pada rentang tanggal yang dipilih.",
       });
       return;
     }
@@ -343,7 +387,7 @@ export default function KegiatanPage() {
       "",
     ];
 
-    const dataForExport = activityData.map((item) => {
+    const dataForExport = dataToExport.map((item) => {
       return [
         item.posyanduName,
         format(new Date(item.activityDate), "yyyy-MM-dd"),
@@ -381,30 +425,6 @@ export default function KegiatanPage() {
     worksheet["!cols"] = [
       { wch: 30 },
       { wch: 15 },
-      { wch: 8 },
-      { wch: 8 },
-      { wch: 8 },
-      { wch: 8 },
-      { wch: 8 },
-      { wch: 8 },
-      { wch: 8 },
-      { wch: 8 },
-      { wch: 8 },
-      { wch: 8 },
-      { wch: 8 },
-      { wch: 8 },
-      { wch: 8 },
-      { wch: 8 },
-      { wch: 8 },
-      { wch: 8 },
-      { wch: 8 },
-      { wch: 30 },
-    ];
-
-    worksheet["!cols"] = [
-      { wch: 30 },
-      { wch: 15 },
-      { wch: 8 },
       { wch: 8 },
       { wch: 8 },
       { wch: 8 },
@@ -519,7 +539,6 @@ export default function KegiatanPage() {
           />
           <Separator />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Kolom Kiri - Jumlah Sasaran */}
             <div>
               <h3 className="mb-4 text-lg font-medium">Jumlah Sasaran</h3>
               <div className="grid grid-cols-2 gap-3">
@@ -654,7 +673,6 @@ export default function KegiatanPage() {
               </div>
             </div>
 
-            {/* Kolom Kanan - Pengunjung */}
             <div>
               <h3 className="mb-4 text-lg font-medium">Pengunjung</h3>
               <div className="grid grid-cols-2 gap-3">
@@ -834,9 +852,6 @@ export default function KegiatanPage() {
             <h1 className="font-headline text-3xl font-bold tracking-tight">
               Laporan Kegiatan Posyandu
             </h1>
-            {/* <p className="text-muted-foreground">
-              Catat dan kelola data kegiatan Posyandu.
-            </p> */}
           </div>
           <div className="flex gap-2">
             {canCreate && (
@@ -860,130 +875,178 @@ export default function KegiatanPage() {
           </div>
         </header>
 
-        <div
-          className={cn(
-            "grid grid-cols-1 gap-12",
-            canCreate && "lg:grid-cols-5"
-          )}
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>Filter Data Kegiatan</CardTitle>
+            <CardDescription>
+              Pilih rentang tanggal untuk memfilter data yang ditampilkan dan diekspor.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col sm:flex-row gap-4 items-center">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-full sm:w-[240px] justify-start text-left font-normal",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, "PPP", { locale: id }) : <span>Tanggal Mulai</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={setStartDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-full sm:w-[240px] justify-start text-left font-normal",
+                    !endDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {endDate ? format(endDate, "PPP", { locale: id }) : <span>Tanggal Selesai</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={setEndDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            <Button onClick={handleFilter} className="bg-[#5D1451] hover:bg-[#4A1040] text-white">
+              Filter
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Dialog
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
         >
-          {/* Formulir Catat Kegiatan Baru dipindah ke modal */}
-          <div className={cn(canCreate ? "lg:col-span-5" : "lg:col-span-5")}>
-            {/* Create Dialog */}
-            <Dialog
-              open={isCreateDialogOpen}
-              onOpenChange={setIsCreateDialogOpen}
-            >
-              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Catat Kegiatan Baru</DialogTitle>
-                  <CardDescription>
-                    Isi formulir untuk melaporkan kegiatan baru.
-                  </CardDescription>
-                </DialogHeader>
-                {renderForm(false)}
-                <DialogFooter>
-                  <Button
-                    onClick={() => setIsCreateDialogOpen(false)}
-                    variant="outline"
-                    className="border-gray-300 text-gray-700 hover:bg-gray-50"
-                  >
-                    Batal
-                  </Button>
-                  <Button
-                    type="submit"
-                    form="create-kegiatan-form"
-                    className="bg-[#5D1451] hover:bg-[#4A1040] text-white"
-                  >
-                    Simpan Kegiatan
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle>Data Kegiatan</CardTitle>
-                <CardDescription>
-                  Daftar semua kegiatan yang tercatat.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Timestamp</TableHead>
-                        <TableHead>Nama Posyandu</TableHead>
-                        <TableHead>Tgl Kegiatan</TableHead>
-                        <TableHead>Foto</TableHead>
-                        {canEdit && <TableHead>Aksi</TableHead>}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {isClient && activityData.length > 0 ? (
-                        activityData.map((record) => (
-                          <TableRow key={record.id}>
-                            <TableCell className="whitespace-nowrap">
-                              {format(new Date(record.timestamp), "Pp", {
-                                locale: id,
-                              })}
-                            </TableCell>
-                            <TableCell>{record.posyanduName}</TableCell>
-                            <TableCell>
-                              {format(new Date(record.activityDate), "PPP", {
-                                locale: id,
-                              })}
-                            </TableCell>
-                            <TableCell>
-                              {record.fotoUrl ? (
-                                <Button
-                                  asChild
-                                  variant="outline"
-                                  size="sm"
-                                  className="border-[#5D1451] text-[#5D1451] hover:bg-[#5D1451] hover:text-white"
-                                >
-                                  <Link
-                                    href={record.fotoUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    <LinkIcon className="mr-2 h-4 w-4" /> Buka
-                                  </Link>
-                                </Button>
-                              ) : (
-                                <span>-</span>
-                              )}
-                            </TableCell>
-                            {canEdit && (
-                              <TableCell>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleEditClick(record)}
-                                  className="border-[#5D1451] text-[#5D1451] hover:bg-[#5D1451] hover:text-white"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            )}
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell
-                            colSpan={canEdit ? 5 : 4}
-                            className="h-24 text-center"
-                          >
-                            {isClient ? "Belum ada data." : "Memuat..."}
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Catat Kegiatan Baru</DialogTitle>
+              <CardDescription>
+                Isi formulir untuk melaporkan kegiatan baru.
+              </CardDescription>
+            </DialogHeader>
+            {renderForm(false)}
+            <DialogFooter>
+              <Button
+                onClick={() => setIsCreateDialogOpen(false)}
+                variant="outline"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                Batal
+              </Button>
+              <Button
+                type="submit"
+                form="create-kegiatan-form"
+                className="bg-[#5D1451] hover:bg-[#4A1040] text-white"
+              >
+                Simpan Kegiatan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>Data Kegiatan</CardTitle>
+            <CardDescription>
+              Daftar semua kegiatan yang tercatat.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Timestamp</TableHead>
+                    <TableHead>Nama Posyandu</TableHead>
+                    <TableHead>Tgl Kegiatan</TableHead>
+                    <TableHead>Foto</TableHead>
+                    {canEdit && <TableHead>Aksi</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isClient && activityData.length > 0 ? (
+                    activityData.map((record) => (
+                      <TableRow key={record.id}>
+                        <TableCell className="whitespace-nowrap">
+                          {format(new Date(record.timestamp), "Pp", {
+                            locale: id,
+                          })}
+                        </TableCell>
+                        <TableCell>{record.posyanduName}</TableCell>
+                        <TableCell>
+                          {format(new Date(record.activityDate), "PPP", {
+                            locale: id,
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          {record.fotoUrl ? (
+                            <Button
+                              asChild
+                              variant="outline"
+                              size="sm"
+                              className="border-[#5D1451] text-[#5D1451] hover:bg-[#5D1451] hover:text-white"
+                            >
+                              <Link
+                                href={record.fotoUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <LinkIcon className="mr-2 h-4 w-4" /> Buka
+                              </Link>
+                            </Button>
+                          ) : (
+                            <span>-</span>
+                          )}
+                        </TableCell>
+                        {canEdit && (
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditClick(record)}
+                              className="border-[#5D1451] text-[#5D1451] hover:bg-[#5D1451] hover:text-white"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
                           </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                        )}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={canEdit ? 5 : 4}
+                        className="h-24 text-center"
+                      >
+                        {isClient ? "Belum ada data." : "Memuat..."}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Edit Dialog */}

@@ -2,12 +2,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { withPermission } from '@/lib/middleware';
+import { AuthUser } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
-export const GET = withPermission('view_kehadiran', async () => {
+export const GET = withPermission('view_kehadiran', async (req: NextRequest) => {
   try {
+    const { searchParams } = new URL(req.url);
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+
+    let whereClause = {};
+
+    if (startDate && endDate) {
+      whereClause = {
+        attendanceDate: {
+          gte: new Date(startDate),
+          lte: new Date(endDate),
+        },
+      };
+    } else if (startDate) {
+      whereClause = {
+        attendanceDate: {
+          gte: new Date(startDate),
+        },
+      };
+    } else if (endDate) {
+      whereClause = {
+        attendanceDate: {
+          lte: new Date(endDate),
+        },
+      };
+    }
+
     const attendances = await prisma.attendanceRecord.findMany({
+      where: whereClause,
       orderBy: {
         timestamp: 'desc',
       },
@@ -19,7 +48,6 @@ export const GET = withPermission('view_kehadiran', async () => {
   }
 });
 
-import { AuthUser } from '@/lib/auth'; // Import AuthUser
 
 export const POST = withPermission('create_kehadiran', async (req: NextRequest, user: AuthUser) => { // Add user parameter
   try {
