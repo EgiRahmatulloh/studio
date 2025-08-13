@@ -876,14 +876,8 @@ export default function KegiatanPage() {
           </div>
         </header>
 
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>Filter Data Kegiatan</CardTitle>
-            <CardDescription>
-              Pilih rentang tanggal untuk memfilter data yang ditampilkan dan diekspor.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col sm:flex-row gap-4 items-center">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -931,8 +925,8 @@ export default function KegiatanPage() {
             <Button onClick={handleFilter} className="bg-[#5D1451] hover:bg-[#4A1040] text-white">
               Filter
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         <Dialog
           open={isCreateDialogOpen}
@@ -965,89 +959,93 @@ export default function KegiatanPage() {
           </DialogContent>
         </Dialog>
 
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>Data Kegiatan</CardTitle>
-            <CardDescription>
-              Daftar semua kegiatan yang tercatat.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="relative w-full overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>Nama Posyandu</TableHead>
-                    <TableHead>Tgl Kegiatan</TableHead>
-                    <TableHead>Foto</TableHead>
-                    {canEdit && <TableHead>Aksi</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isClient && activityData.length > 0 ? (
-                    activityData.map((record) => (
-                      <TableRow key={record.id}>
-                        <TableCell className="whitespace-nowrap">
-                          {format(new Date(record.timestamp), "Pp", {
-                            locale: id,
-                          })}
-                        </TableCell>
-                        <TableCell>{record.posyanduName}</TableCell>
-                        <TableCell>
-                          {format(new Date(record.activityDate), "PPP", {
-                            locale: id,
-                          })}
-                        </TableCell>
-                        <TableCell>
-                          {record.fotoUrl ? (
-                            <Button
-                              asChild
-                              variant="outline"
-                              size="sm"
-                              className="border-[#5D1451] text-[#5D1451] hover:bg-[#5D1451] hover:text-white"
-                            >
-                              <Link
-                                href={record.fotoUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                <LinkIcon className="mr-2 h-4 w-4" /> Buka
-                              </Link>
-                            </Button>
-                          ) : (
-                            <span>-</span>
-                          )}
-                        </TableCell>
-                        {canEdit && (
-                          <TableCell>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditClick(record)}
-                              className="border-[#5D1451] text-[#5D1451] hover:bg-[#5D1451] hover:text-white"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        )}
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-5">
+          <div className="lg:col-span-5">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle>Data Kegiatan</CardTitle>
+                <CardDescription>
+                  Daftar semua kegiatan yang tercatat.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Timestamp</TableHead>
+                        <TableHead>Nama Posyandu</TableHead>
+                        <TableHead>Tgl Kegiatan</TableHead>
+                        <TableHead>Foto</TableHead>
+                        {canEdit && <TableHead>Aksi</TableHead>}
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={canEdit ? 5 : 4}
-                        className="h-24 text-center"
-                      >
-                        {isClient ? "Belum ada data." : "Memuat..."}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {isClient && activityData.length > 0 ? (
+                        activityData.map((record) => (
+                          <TableRow key={record.id}>
+                            <TableCell className="whitespace-nowrap">
+                              {format(new Date(record.timestamp), "Pp", {
+                                locale: id,
+                              })}
+                            </TableCell>
+                            <TableCell>{record.posyanduName}</TableCell>
+                            <TableCell>
+                              {format(new Date(record.activityDate), "PPP", {
+                                locale: id,
+                              })}
+                            </TableCell>
+                            <TableCell>
+                              {record.fotoUrl ? (
+                                <Button
+                                  asChild
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-[#5D1451] text-[#5D1451] hover:bg-[#5D1451] hover:text-white"
+                                >
+                                  <Link
+                                    href={record.fotoUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <LinkIcon className="mr-2 h-4 w-4" /> Buka
+                                  </Link>
+                                </Button>
+                              ) : (
+                                <span>-</span>
+                              )}
+                            </TableCell>
+                            {canEdit && (
+                              <TableCell>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEditClick(record)}
+                                  className="border-[#5D1451] text-[#5D1451] hover:bg-[#5D1451] hover:text-white"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell
+                            colSpan={canEdit ? 5 : 4}
+                            className="h-24 text-center"
+                          >
+                            {isClient ? "Belum ada data." : "Memuat..."}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
 
       {/* Edit Dialog */}
