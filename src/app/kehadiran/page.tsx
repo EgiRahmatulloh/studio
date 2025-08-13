@@ -425,7 +425,7 @@ export default function KehadiranPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto rounded-md border">
+                <div className="overflow-x-auto rounded-md border max-h-[500px] overflow-y-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
