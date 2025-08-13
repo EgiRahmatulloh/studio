@@ -108,7 +108,7 @@ async function main() {
     try {
       const newUser = await createUser({ ...user, role: 'USER' });
       console.log(`✅ Created posyandu user: ${newUser.email}`);
-      await updateUser(newUser.id, { permissions: ['view_kehadiran', 'view_kegiatan', 'export_data'] });
+      await updateUser(newUser.id, { permissions: ['view_kehadiran', 'view_kegiatan', 'create_kehadiran', 'create_kegiatan', 'edit_kegiatan'] });
       console.log(`✅ Assigned permissions to ${newUser.email}`);
     } catch (error: any) {
       if (error.code === 'P2002') {
@@ -122,7 +122,6 @@ async function main() {
   console.log('🎉 Seeding completed!');
   console.log('\n📋 Default accounts:');
   console.log('Admin: admin@posyandu.com / admin123');
-  console.log('User:  user@posyandu.com / user123');
   for (const user of posyanduUsers) {
     console.log(`${user.posyanduName}: ${user.email} / ${user.password}`);
   }
