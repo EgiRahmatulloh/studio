@@ -309,7 +309,7 @@ export default function KegiatanPage() {
     }
   }
 
-  async function handleExport() {
+    async function handleExport() {
     let dataToExport = activityData;
 
     if (startDate || endDate) {
@@ -354,15 +354,17 @@ export default function KegiatanPage() {
     }
 
     const header1 = [
+      "Timestamp",
       "Nama Posyandu",
       "Tanggal Kegiatan",
       "Jumlah sasaran",
-      "", "", "", "", "", "", "",
+      "", "", "", "", "", "", "", "",
       "Jumlah pengunjung",
-      "", "", "", "", "", "", "",
+      "", "", "", "", "", "", "", "",
       "Foto Kegiatan",
     ];
     const header2 = [
+      "",
       "",
       "",
       "Bayi",
@@ -386,6 +388,7 @@ export default function KegiatanPage() {
 
     const dataForExport = dataToExport.map((item) => {
       return [
+        new Date(item.timestamp).toLocaleString("id-ID"),
         item.posyanduName,
         format(new Date(item.activityDate), "yyyy-MM-dd"),
         item.sasaranBayi || 0,
@@ -412,14 +415,16 @@ export default function KegiatanPage() {
     const worksheet = XLSX.utils.aoa_to_sheet(finalData);
 
     worksheet["!merges"] = [
-      { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } }, // Nama Posyandu
-      { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } }, // Tanggal Kegiatan
-      { s: { r: 0, c: 2 }, e: { r: 0, c: 9 } }, // Jumlah sasaran
-      { s: { r: 0, c: 10 }, e: { r: 0, c: 17 } }, // Jumlah pengunjung
-      { s: { r: 0, c: 18 }, e: { r: 1, c: 18 } }, // Foto Kegiatan
+      { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } }, // Timestamp
+      { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } }, // Nama Posyandu
+      { s: { r: 0, c: 2 }, e: { r: 1, c: 2 } }, // Tanggal Kegiatan
+      { s: { r: 0, c: 3 }, e: { r: 0, c: 10 } }, // Jumlah sasaran
+      { s: { r: 0, c: 11 }, e: { r: 0, c: 18 } }, // Jumlah pengunjung
+      { s: { r: 0, c: 19 }, e: { r: 1, c: 19 } }, // Foto Kegiatan
     ];
 
     worksheet["!cols"] = [
+      { wch: 20 }, // Timestamp
       { wch: 30 },
       { wch: 15 },
       { wch: 8 },
