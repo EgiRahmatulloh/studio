@@ -358,9 +358,9 @@ export default function KegiatanPage() {
       "Nama Posyandu",
       "Tanggal Kegiatan",
       "Jumlah sasaran",
-      "", "", "", "", "", "", "", "",
+      "", "", "", "", "", "", "",
       "Jumlah pengunjung",
-      "", "", "", "", "", "", "", "",
+      "", "", "", "", "", "", "",
       "Foto Kegiatan",
     ];
     const header2 = [
