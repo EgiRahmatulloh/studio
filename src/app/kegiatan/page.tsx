@@ -932,7 +932,7 @@ export default function KegiatanPage() {
           open={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
         >
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Catat Kegiatan Baru</DialogTitle>
               <CardDescription>
@@ -1050,7 +1050,7 @@ export default function KegiatanPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Data Kegiatan</DialogTitle>
             <CardDescription>
