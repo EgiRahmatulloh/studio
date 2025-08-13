@@ -60,6 +60,8 @@ export default function KehadiranPage() {
   );
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [hasAttendedToday, setHasAttendedToday] = useState(false);
+  const [attendanceConfig, setAttendanceConfig] = useState<{ id: string; configDate: string } | null>(null);
+  const [isAttendanceButtonActive, setIsAttendanceButtonActive] = useState(false);
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const { toast } = useToast();
@@ -85,8 +87,42 @@ export default function KehadiranPage() {
   useEffect(() => {
     if (user && canView) {
       fetchAttendances();
+      fetchAttendanceConfig();
     }
   }, [user, canView]);
+
+  useEffect(() => {
+    if (attendanceConfig) {
+      const today = new Date();
+      const configDate = new Date(attendanceConfig.configDate);
+
+      const isSameDay = today.getDate() === configDate.getDate() &&
+                        today.getMonth() === configDate.getMonth() &&
+                        today.getFullYear() === configDate.getFullYear();
+      setIsAttendanceButtonActive(isSameDay);
+    } else {
+      setIsAttendanceButtonActive(false); // Disable if no config exists
+    }
+  }, [attendanceConfig]);
+
+  const fetchAttendanceConfig = async () => {
+    try {
+      const token = localStorage.getItem("auth-token");
+      const response = await fetch("/api/admin/attendance-config", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAttendanceConfig(data);
+      } else {
+        console.error("Failed to fetch attendance config");
+      }
+    } catch (error) {
+      console.error("Error fetching attendance config:", error);
+    }
+  };
 
   const fetchAttendances = async (
     start?: Date | undefined,
@@ -405,11 +441,13 @@ export default function KehadiranPage() {
                   <Button
                     onClick={handleRecordAttendance}
                     className="w-full bg-[#5D1451] hover:bg-[#4A1040] text-white"
-                    disabled={hasAttendedToday}
+                    disabled={hasAttendedToday || !isAttendanceButtonActive}
                   >
                     {hasAttendedToday
                       ? "Sudah Hadir Hari Ini"
-                      : "Catat Kehadiran"}
+                      : isAttendanceButtonActive
+                      ? "Catat Kehadiran"
+                      : "Tombol Hadir Nonaktif (Di luar tanggal yang ditentukan)"}
                   </Button>
                 </CardContent>
               </Card>

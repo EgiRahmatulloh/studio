@@ -39,7 +39,12 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2, Edit, UserPlus, FilePlus } from "lucide-react";
+import { Trash2, Edit, UserPlus, FilePlus, Calendar as CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 // Daftar nama posyandu
 const POSYANDU_NAMES = [
@@ -75,6 +80,9 @@ export default function AdminPage() {
 
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
+  const [attendanceConfig, setAttendanceConfig] = useState<{ id: string; configDate: string } | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+
   const [newUser, setNewUser] = useState({
     email: "",
     username: "",
@@ -104,7 +112,82 @@ export default function AdminPage() {
     }
 
     fetchData();
+    fetchAttendanceConfig();
   }, [currentUser, isAdmin, router]);
+
+  const fetchAttendanceConfig = async () => {
+    try {
+      const headers = getAuthHeader();
+      const response = await fetch("/api/admin/attendance-config", { headers });
+      if (response.ok) {
+        const data = await response.json();
+        if (data) {
+          setAttendanceConfig(data);
+          setSelectedDate(new Date(data.configDate));
+        }
+      } else {
+        console.error("Failed to fetch attendance config");
+      }
+    } catch (error) {
+      console.error("Error fetching attendance config:", error);
+    }
+  };
+
+  const handleSaveAttendanceConfig = async () => {
+    if (!selectedDate) {
+      toast({
+        title: "Error",
+        description: "Silakan pilih tanggal terlebih dahulu.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const headers = getAuthHeader();
+      const body = JSON.stringify({ configDate: selectedDate.toISOString() });
+      let response;
+
+      if (attendanceConfig) {
+        // Update existing config
+        response = await fetch("/api/admin/attendance-config", {
+          method: "PUT",
+          headers: { ...headers, "Content-Type": "application/json" },
+          body: JSON.stringify({ id: attendanceConfig.id, configDate: selectedDate.toISOString() }),
+        });
+      } else {
+        // Create new config
+        response = await fetch("/api/admin/attendance-config", {
+          method: "POST",
+          headers: { ...headers, "Content-Type": "application/json" },
+          body: JSON.stringify({ configDate: selectedDate.toISOString() }),
+        });
+      }
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setAttendanceConfig(data);
+        toast({
+          title: "Berhasil",
+          description: "Tanggal kehadiran berhasil disimpan.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.message || "Gagal menyimpan tanggal kehadiran.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error saving attendance config:", error);
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan server saat menyimpan tanggal kehadiran.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const getAuthHeader = () => {
     const token = localStorage.getItem("auth-token");
@@ -563,6 +646,64 @@ export default function AdminPage() {
               </TableBody>
             </Table>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Attendance Configuration Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Konfigurasi Tanggal Kehadiran</CardTitle>
+          <CardDescription>
+            Atur tanggal pelaksanaan kehadiran posyandu.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="grid gap-2 w-full sm:w-auto">
+              <Label htmlFor="attendanceDate">Tanggal Kehadiran</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full sm:w-[240px] justify-start text-left font-normal",
+                      !selectedDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? (
+                      format(selectedDate, "PPP", { locale: id })
+                    ) : (
+                      <span>Pilih tanggal</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    initialFocus
+                    locale={id}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <Button
+              onClick={handleSaveAttendanceConfig}
+              className="w-full sm:w-auto bg-[#5D1451] hover:bg-[#4A1040] text-white mt-auto"
+            >
+              Simpan Tanggal
+            </Button>
+          </div>
+          {attendanceConfig && (
+            <p className="text-sm text-gray-600 mt-4">
+              Tanggal kehadiran saat ini:{" "}
+              <span className="font-medium">
+                {format(new Date(attendanceConfig.configDate), "PPP", { locale: id })}
+              </span>
+            </p>
+          )}
         </CardContent>
       </Card>
 

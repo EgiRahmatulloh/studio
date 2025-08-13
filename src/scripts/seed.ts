@@ -171,12 +171,60 @@ async function main() {
   // Buat data kehadiran dummy berdasarkan user yang ada
   console.log('\n📝 Creating dummy attendance records based on existing users...');
   
+  // Buat data kehadiran dummy berdasarkan user yang ada
+  console.log('\n📝 Creating dummy attendance records based on existing users...');
+  
+  // Buat AttendanceSchedule untuk setiap bulan yang akan diisi data kehadiran
+  const uniqueAttendanceDates: Date[] = [];
+  for (let i = 0; i < 12; i++) {
+    const date = new Date();
+    date.setMonth(date.getMonth() - i);
+    date.setDate(1);
+    date.setHours(0, 0, 0, 0); // Normalize to start of day
+    uniqueAttendanceDates.push(date);
+  }
+
+  const attendanceSchedules: { [key: string]: string } = {}; // Map date string to scheduleId
+
+  for (const date of uniqueAttendanceDates) {
+    try {
+      const existingSchedule = await prisma.attendanceSchedule.findUnique({
+        where: { scheduleDate: date },
+      });
+
+      let scheduleId;
+      if (existingSchedule) {
+        scheduleId = existingSchedule.id;
+        console.log(`⚠️  Attendance schedule for ${date.toLocaleDateString()} already exists.`);
+      } else {
+        const newSchedule = await prisma.attendanceSchedule.create({
+          data: {
+            scheduleDate: date,
+            isActive: true, // Default to active for dummy data
+          },
+        });
+        scheduleId = newSchedule.id;
+        console.log(`✅ Created attendance schedule for ${date.toLocaleDateString()}`);
+      }
+      attendanceSchedules[date.toISOString()] = scheduleId;
+    } catch (error: any) {
+      console.error(`❌ Error creating attendance schedule for ${date.toLocaleDateString()}:`, error);
+    }
+  }
+
   for (const user of posyanduUsers) {
-    // Buat 1 data kehadiran per bulan untuk setiap user selama 12 bulan terakhir
-    for (let i = 0; i < 12; i++) {
+    // Buat 1 data kehadiran per bulan untuk setiap user selama 3 bulan terakhir
+    for (let i = 0; i < 3; i++) {
       const attendanceDate = new Date();
       attendanceDate.setMonth(attendanceDate.getMonth() - i); // Setiap bulan sekali
       attendanceDate.setDate(1); // Set ke tanggal 1 setiap bulan untuk konsistensi
+      attendanceDate.setHours(0, 0, 0, 0); // Normalize to start of day
+
+      const scheduleId = attendanceSchedules[attendanceDate.toISOString()];
+      if (!scheduleId) {
+        console.error(`❌ Schedule ID not found for date ${attendanceDate.toLocaleDateString()}. Skipping attendance record for ${user.fullName}.`);
+        continue;
+      }
 
       try {
         await prisma.attendanceRecord.create({
@@ -184,6 +232,7 @@ async function main() {
             posyanduName: user.posyanduName,
             fullName: user.fullName,
             attendanceDate: attendanceDate,
+            scheduleId: scheduleId,
           },
         });
         console.log(`✅ Created attendance record for ${user.fullName} at ${user.posyanduName} on ${attendanceDate.toLocaleDateString()}`);
