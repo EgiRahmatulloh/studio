@@ -973,7 +973,7 @@ export default function KegiatanPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto rounded-md border">
+            <div className="relative w-full overflow-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
