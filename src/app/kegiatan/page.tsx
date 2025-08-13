@@ -357,12 +357,9 @@ export default function KegiatanPage() {
       "Nama Posyandu",
       "Tanggal Kegiatan",
       "Jumlah sasaran",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
+      "", "", "", "", "", "", "",
+      "Jumlah pengunjung",
+      "", "", "", "", "", "", "",
       "Foto Kegiatan",
     ];
     const header2 = [
@@ -415,17 +412,16 @@ export default function KegiatanPage() {
     const worksheet = XLSX.utils.aoa_to_sheet(finalData);
 
     worksheet["!merges"] = [
-      { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },
-      { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } },
-      { s: { r: 0, c: 19 }, e: { r: 1, c: 19 } },
-      { s: { r: 0, c: 2 }, e: { r: 0, c: 9 } },
-      { s: { r: 0, c: 10 }, e: { r: 0, c: 18 } },
+      { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } }, // Nama Posyandu
+      { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } }, // Tanggal Kegiatan
+      { s: { r: 0, c: 2 }, e: { r: 0, c: 9 } }, // Jumlah sasaran
+      { s: { r: 0, c: 10 }, e: { r: 0, c: 17 } }, // Jumlah pengunjung
+      { s: { r: 0, c: 18 }, e: { r: 1, c: 18 } }, // Foto Kegiatan
     ];
 
     worksheet["!cols"] = [
       { wch: 30 },
       { wch: 15 },
-      { wch: 8 },
       { wch: 8 },
       { wch: 8 },
       { wch: 8 },

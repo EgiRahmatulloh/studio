@@ -168,26 +168,27 @@ async function main() {
     }
   }
 
-  // Buat data kehadiran dummy
-  console.log('\nAttendance Creating dummy attendance records...');
-  const dummyFullNames = ["Budi Santoso", "Siti Aminah", "Agus Salim", "Dewi Lestari", "Joko Susilo", "Ani Rahayu"];
-
-  for (const name of posyanduNames) {
-    for (let i = 0; i < 5; i++) { // Buat 5 kehadiran untuk setiap posyandu
-      const attendanceDate = new Date(today);
-      attendanceDate.setDate(today.getDate() - (i * 5)); // Setiap 5 hari sekali
+  // Buat data kehadiran dummy berdasarkan user yang ada
+  console.log('\n📝 Creating dummy attendance records based on existing users...');
+  
+  for (const user of posyanduUsers) {
+    // Buat 1 data kehadiran per bulan untuk setiap user selama 12 bulan terakhir
+    for (let i = 0; i < 12; i++) {
+      const attendanceDate = new Date();
+      attendanceDate.setMonth(attendanceDate.getMonth() - i); // Setiap bulan sekali
+      attendanceDate.setDate(1); // Set ke tanggal 1 setiap bulan untuk konsistensi
 
       try {
         await prisma.attendanceRecord.create({
           data: {
-            posyanduName: name,
-            fullName: dummyFullNames[Math.floor(Math.random() * dummyFullNames.length)],
+            posyanduName: user.posyanduName,
+            fullName: user.fullName,
             attendanceDate: attendanceDate,
           },
         });
-        console.log(`✅ Created attendance record for ${name} on ${attendanceDate.toDateString()}`);
+        console.log(`✅ Created attendance record for ${user.fullName} at ${user.posyanduName} on ${attendanceDate.toLocaleDateString()}`);
       } catch (error) {
-        console.error(`❌ Error creating attendance record for ${name}:`, error);
+        console.error(`❌ Error creating attendance record for ${user.fullName}:`, error);
       }
     }
   }
