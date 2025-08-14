@@ -117,3 +117,13 @@ model StuntingRecord {
 
   @@map("stunting_records")
 }
+
+model Visitor {
+  id          String   @id @default(uuid())
+  fullName    String   @map("full_name")
+  dateOfBirth DateTime @map("date_of_birth")
+  category    String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("visitors")
+}
