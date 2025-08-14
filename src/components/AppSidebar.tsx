@@ -155,6 +155,29 @@ export function AppSidebar() {
             </SidebarMenuItem>
           )}
 
+          {(isAdmin() || user.permissions.includes("view_children")) && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                className={cn(
+                  "px-6 py-3",
+                  isActive("/children") &&
+                    "bg-[#5D1451]/10 text-[#5D1451] font-medium border-l-4 border-[#5D1451]"
+                )}
+              >
+                <Link href="/children" className="flex items-center">
+                  <Users
+                    className={cn(
+                      "mr-3",
+                      isActive("/children") && "text-[#5D1451]"
+                    )}
+                  />
+                  Data Anak
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
+
           {isAdmin() && (
             <SidebarMenuItem>
               <SidebarMenuButton

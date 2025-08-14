@@ -18,6 +18,7 @@ async function main() {
     'delete_kegiatan',
     'view_reports',
     'export_data',
+    'view_children',
   ];
 
   console.log('📝 Creating default permissions...');

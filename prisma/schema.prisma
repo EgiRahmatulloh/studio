@@ -90,3 +90,30 @@ enum Role {
   ADMIN
   USER
 }
+
+model Child {
+  id           String         @id @default(uuid())
+  fullName     String         @map("full_name")
+  dateOfBirth  DateTime       @map("date_of_birth")
+  gender       String
+  posyanduName String         @map("posyandu_name")
+  stuntingRecords StuntingRecord[]
+
+  @@map("children")
+}
+
+model StuntingRecord {
+  id           String   @id @default(uuid())
+  childId      String   @map("child_id")
+  child        Child    @relation(fields: [childId], references: [id])
+  height          Float
+  weight          Float
+  headCircumference Float? @map("head_circumference")
+  armCircumference  Float? @map("arm_circumference")
+  weightForAgeZScore Float? @map("weight_for_age_z_score")
+  heightForAgeZScore Float? @map("height_for_age_z_score")
+  weightForHeightZScore Float? @map("weight_for_height_z_score")
+  measurementDate DateTime @map("measurement_date")
+
+  @@map("stunting_records")
+}
