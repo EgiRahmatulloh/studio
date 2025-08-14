@@ -155,6 +155,28 @@ export function AppSidebar() {
             </SidebarMenuItem>
           )}
 
+          {/* Menu Pendaftaran */}
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              className={cn(
+                "px-6 py-3",
+                isActive("/pendaftaran") &&
+                  "bg-[#5D1451]/10 text-[#5D1451] font-medium border-l-4 border-[#5D1451]"
+              )}
+            >
+              <Link href="/pendaftaran" className="flex items-center">
+                <UserIcon
+                  className={cn(
+                    "mr-3",
+                    isActive("/pendaftaran") && "text-[#5D1451]"
+                  )}
+                />
+                Pendaftaran
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
           {isAdmin() && (
             <SidebarMenuItem>
               <SidebarMenuButton
