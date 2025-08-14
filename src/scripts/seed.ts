@@ -37,7 +37,7 @@ async function main() {
   // Buat admin default
   console.log('👤 Creating default admin user...');
   try {
-    const adminUser = await createUser({ email: 'admin@posyandu.com', username: 'admin', password: 'admin123', role: 'ADMIN', fullName: 'Admin Posyandu', posyanduName: 'Kantor Pusat' });
+    const adminUser = await createUser({ email: 'sekdes@posyandu.com', username: 'sekdes', password: 'sekdes123', role: 'ADMIN', fullName: 'Sekertaris Desa Cintanagara', posyanduName: 'Kantor Pusat' });
     console.log('✅ Created admin user:', adminUser.email);
   } catch (error: any) {
     if (error.code === 'P2002') {
@@ -123,124 +123,9 @@ async function main() {
   console.log('\n📋 Default accounts:');
   console.log('Admin: admin@posyandu.com / admin123');
   for (const user of posyanduUsers) {
-    console.log(`${user.posyanduName}: ${user.email} / ${user.password}`);
+    console.log(`${user.posyanduName}: ${user.username} / ${user.password}`);
   }
 
-  // Buat data kegiatan dummy
-  console.log('\n📊 Creating dummy activity records...');
-  const posyanduNames = ["DAHLIA", "KENANGA I", "MAWAR MERAH", "CEMPAKA", "KENANGA II", "MELATI"];
-  const today = new Date();
-
-  for (const name of posyanduNames) {
-    for (let i = 0; i < 3; i++) { // Buat 3 kegiatan untuk setiap posyandu
-      const activityDate = new Date(today);
-      activityDate.setMonth(today.getMonth() - i); // Setiap bulan sekali
-      activityDate.setDate(1); // Set ke tanggal 1 setiap bulan untuk konsistensi
-
-      try {
-        await prisma.activityRecord.create({
-          data: {
-            posyanduName: name,
-            activityDate: activityDate,
-            sasaranBalita: Math.floor(Math.random() * 50) + 10,
-            sasaranBumil: Math.floor(Math.random() * 20) + 5,
-            sasaranRemaja: Math.floor(Math.random() * 30) + 5,
-            sasaranLansia: Math.floor(Math.random() * 25) + 5,
-            sasaranBusu: Math.floor(Math.random() * 15) + 3,
-            sasaranBayi: Math.floor(Math.random() * 10) + 2,
-            sasaranDewasa: Math.floor(Math.random() * 40) + 10,
-            sasaranBufas: Math.floor(Math.random() * 10) + 2,
-            pengunjungBalita: Math.floor(Math.random() * 40) + 5,
-            pengunjungBumil: Math.floor(Math.random() * 15) + 2,
-            pengunjungRemaja: Math.floor(Math.random() * 25) + 3,
-            pengunjungLansia: Math.floor(Math.random() * 20) + 3,
-            pengunjungBusu: Math.floor(Math.random() * 10) + 1,
-            pengunjungBayi: Math.floor(Math.random() * 8) + 1,
-            pengunjungDewasa: Math.floor(Math.random() * 30) + 5,
-            pengunjungBufas: Math.floor(Math.random() * 8) + 1,
-            fotoUrl: null,
-          },
-        });
-        console.log(`✅ Created activity record for ${name} on ${activityDate.toDateString()}`);
-      } catch (error) {
-        console.error(`❌ Error creating activity record for ${name}:`, error);
-      }
-    }
-  }
-
-  // Buat data kehadiran dummy berdasarkan user yang ada
-  console.log('\n📝 Creating dummy attendance records based on existing users...');
-  
-  // Buat data kehadiran dummy berdasarkan user yang ada
-  console.log('\n📝 Creating dummy attendance records based on existing users...');
-  
-  // Buat AttendanceSchedule untuk setiap bulan yang akan diisi data kehadiran
-  const uniqueAttendanceDates: Date[] = [];
-  for (let i = 0; i < 12; i++) {
-    const date = new Date();
-    date.setMonth(date.getMonth() - i);
-    date.setDate(1);
-    date.setHours(0, 0, 0, 0); // Normalize to start of day
-    uniqueAttendanceDates.push(date);
-  }
-
-  const attendanceSchedules: { [key: string]: string } = {}; // Map date string to scheduleId
-
-  for (const date of uniqueAttendanceDates) {
-    try {
-      const existingSchedule = await prisma.attendanceSchedule.findUnique({
-        where: { scheduleDate: date },
-      });
-
-      let scheduleId;
-      if (existingSchedule) {
-        scheduleId = existingSchedule.id;
-        console.log(`⚠️  Attendance schedule for ${date.toLocaleDateString()} already exists.`);
-      } else {
-        const newSchedule = await prisma.attendanceSchedule.create({
-          data: {
-            scheduleDate: date,
-            isActive: true, // Default to active for dummy data
-          },
-        });
-        scheduleId = newSchedule.id;
-        console.log(`✅ Created attendance schedule for ${date.toLocaleDateString()}`);
-      }
-      attendanceSchedules[date.toISOString()] = scheduleId;
-    } catch (error: any) {
-      console.error(`❌ Error creating attendance schedule for ${date.toLocaleDateString()}:`, error);
-    }
-  }
-
-  for (const user of posyanduUsers) {
-    // Buat 1 data kehadiran per bulan untuk setiap user selama 3 bulan terakhir
-    for (let i = 0; i < 3; i++) {
-      const attendanceDate = new Date();
-      attendanceDate.setMonth(attendanceDate.getMonth() - i); // Setiap bulan sekali
-      attendanceDate.setDate(1); // Set ke tanggal 1 setiap bulan untuk konsistensi
-      attendanceDate.setHours(0, 0, 0, 0); // Normalize to start of day
-
-      const scheduleId = attendanceSchedules[attendanceDate.toISOString()];
-      if (!scheduleId) {
-        console.error(`❌ Schedule ID not found for date ${attendanceDate.toLocaleDateString()}. Skipping attendance record for ${user.fullName}.`);
-        continue;
-      }
-
-      try {
-        await prisma.attendanceRecord.create({
-          data: {
-            posyanduName: user.posyanduName,
-            fullName: user.fullName,
-            attendanceDate: attendanceDate,
-            scheduleId: scheduleId,
-          },
-        });
-        console.log(`✅ Created attendance record for ${user.fullName} at ${user.posyanduName} on ${attendanceDate.toLocaleDateString()}`);
-      } catch (error) {
-        console.error(`❌ Error creating attendance record for ${user.fullName}:`, error);
-      }
-    }
-  }
 }
 
 main()
