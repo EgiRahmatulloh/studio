@@ -86,6 +86,16 @@ export const POST = withPermission('create_kehadiran', async (req: NextRequest, 
         posyanduName: data.posyanduName,
         fullName: data.fullName,
         attendanceDate: new Date(data.attendanceDate),
+        schedule: {
+          connectOrCreate: {
+            where: {
+              scheduleDate: new Date(new Date(data.attendanceDate).setHours(0, 0, 0, 0)),
+            },
+            create: {
+              scheduleDate: new Date(new Date(data.attendanceDate).setHours(0, 0, 0, 0)),
+            },
+          },
+        },
       },
     });
     return NextResponse.json(newAttendance, { status: 201 });
