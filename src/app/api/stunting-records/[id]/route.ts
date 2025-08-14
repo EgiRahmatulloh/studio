@@ -38,8 +38,11 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
     // Calculate Z-scores
     const growthDataType = (child.gender.toLowerCase() === 'male' || child.gender.toLowerCase() === 'laki-laki') ? 'length_for_age_boys' : 'length_for_age_girls';
-    const calculatedHeightForAgeZScore = calculateZScore(parseFloat(height), ageInMonths, child.gender, growthDataType);
-    // TODO: Add calculations for weightForAgeZScore and weightForHeightZScore here when data is available
+    const growthDataTypeLength = (child.gender.toLowerCase() === 'male' || child.gender.toLowerCase() === 'laki-laki') ? 'length_for_age_boys' : 'length_for_age_girls';
+    const calculatedHeightForAgeZScore = calculateZScore(parseFloat(height), ageInMonths, child.gender, growthDataTypeLength);
+
+    const growthDataTypeWeight = (child.gender.toLowerCase() === 'male' || child.gender.toLowerCase() === 'laki-laki') ? 'weight_for_age_boys' : 'weight_for_age_girls';
+    const calculatedWeightForAgeZScore = calculateZScore(parseFloat(weight), ageInMonths, child.gender, growthDataTypeWeight);
 
     const updatedStuntingRecord = await prisma.stuntingRecord.update({
       where: { id },
@@ -50,7 +53,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         headCircumference: headCircumference ? parseFloat(headCircumference) : null,
         armCircumference: armCircumference ? parseFloat(armCircumference) : null,
         measurementDate: new Date(measurementDate),
-        weightForAgeZScore: null, // Placeholder for now
+        weightForAgeZScore: calculatedWeightForAgeZScore,
         heightForAgeZScore: calculatedHeightForAgeZScore,
         weightForHeightZScore: null, // Placeholder for now
       },

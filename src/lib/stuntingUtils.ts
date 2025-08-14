@@ -9,13 +9,22 @@ interface GrowthStandard {
 }
 
 // Function to get the appropriate growth standard data based on gender and type
-function getGrowthStandardData(gender: string, type: 'length_for_age_boys' | 'length_for_age_girls'): GrowthStandard[] {
-  if (gender.toLowerCase() === 'male' || gender.toLowerCase() === 'laki-laki') {
-    return whoGrowthStandards.length_for_age_boys;
-  } else if (gender.toLowerCase() === 'female' || gender.toLowerCase() === 'perempuan') {
-    return whoGrowthStandards.length_for_age_girls;
+function getGrowthStandardData(gender: string, type: 'length_for_age_boys' | 'length_for_age_girls' | 'weight_for_age_boys' | 'weight_for_age_girls'): GrowthStandard[] {
+  const lowerCaseGender = gender.toLowerCase();
+  if (lowerCaseGender === 'male' || lowerCaseGender === 'laki-laki') {
+    if (type === 'length_for_age_boys') {
+      return whoGrowthStandards.length_for_age_boys;
+    } else if (type === 'weight_for_age_boys') {
+      return whoGrowthStandards.weight_for_age_boys;
+    }
+  } else if (lowerCaseGender === 'female' || lowerCaseGender === 'perempuan') {
+    if (type === 'length_for_age_girls') {
+      return whoGrowthStandards.length_for_age_girls;
+    } else if (type === 'weight_for_age_girls') {
+      return whoGrowthStandards.weight_for_age_girls;
+    }
   }
-  return []; // Or throw an error for unsupported gender
+  return []; // Or throw an error for unsupported gender/type combination
 }
 
 // Function to interpolate L, M, S values for a given age in months
@@ -53,7 +62,7 @@ export function calculateZScore(
   measurement: number,
   ageInMonths: number,
   gender: string,
-  type: 'length_for_age_boys' | 'length_for_age_girls' // Allow both types
+  type: 'length_for_age_boys' | 'length_for_age_girls' | 'weight_for_age_boys' | 'weight_for_age_girls' // Allow all types
 ): number | null {
   const growthData = getGrowthStandardData(gender, type);
   const lms = interpolateLMS(growthData, ageInMonths);
