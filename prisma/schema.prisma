@@ -29,6 +29,7 @@ model ActivityRecord {
   fotoUrl          String?  @map("foto_url")
   pengunjungBufas  Int      @map("pengunjung_bufas")
   sasaranBufas     Int      @map("sasaran_bufas")
+  visitors         Visitor[]
 
   @@map("activity_records")
 }
@@ -89,4 +90,18 @@ model Permission {
 enum Role {
   ADMIN
   USER
+}
+
+model Visitor {
+  id              String        @id @default(uuid())
+  createdAt       DateTime      @default(now())
+  name            String
+  birthDate       DateTime      @map("birth_date")
+  gender          String
+  category        String
+  posyanduName    String        @map("posyandu_name")
+  activityRecord  ActivityRecord? @relation(fields: [activityRecordId], references: [id])
+  activityRecordId String?       @map("activity_record_id")
+
+  @@map("visitors")
 }
