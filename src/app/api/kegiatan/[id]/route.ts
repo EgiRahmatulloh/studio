@@ -1,27 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { withPermission } from '@/lib/middleware';
-import { AuthUser } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
-type RouteContext = {
-    params: {
-        id: string;
-    }
-}
-
-// PUT - Update activity record
-export const PUT = withPermission('edit_kegiatan', async (req: NextRequest, user: AuthUser, context: RouteContext) => {
+export const GET = withPermission('view_kegiatan', async (req: NextRequest, { params }: { params: { id: string } }) => {
   try {
-    const { id } = context.params;
+    const { id } = params;
+    const activity = await prisma.activityRecord.findUnique({
+      where: { id },
+    });
+    if (!activity) {
+      return NextResponse.json({ error: 'Activity not found' }, { status: 404 });
+    }
+    return NextResponse.json(activity);
+  } catch (error) {
+    console.error('Error fetching activity:', error);
+    return NextResponse.json({ error: 'Failed to fetch activity' }, { status: 500 });
+  }
+});
+
+export const PUT = withPermission('edit_kegiatan', async (req: NextRequest, { params }: { params: { id:string } }) => {
+  try {
+    const { id } = params;
     const data = await req.json();
+
+    // Data validation could be added here with Zod
 
     const updatedActivity = await prisma.activityRecord.update({
       where: { id },
       data: {
-        posyanduName: data.posyanduName,
-        activityDate: new Date(data.activityDate),
         sasaranBalita: data.sasaranBalita,
         sasaranBumil: data.sasaranBumil,
         sasaranRemaja: data.sasaranRemaja,
@@ -30,23 +38,30 @@ export const PUT = withPermission('edit_kegiatan', async (req: NextRequest, user
         sasaranBusu: data.sasaranBusu,
         sasaranBayi: data.sasaranBayi,
         sasaranDewasa: data.sasaranDewasa,
-        pengunjungBalita: data.pengunjungBalita,
-        pengunjungBumil: data.pengunjungBumil,
-        pengunjungRemaja: data.pengunjungRemaja,
-        pengunjungLansia: data.pengunjungLansia,
-        pengunjungBufas: data.pengunjungBufas,
-        pengunjungBusu: data.pengunjungBusu,
-        pengunjungBayi: data.pengunjungBayi,
-        pengunjungDewasa: data.pengunjungDewasa,
-        // totalSasaran: data.totalSasaran,
-        // totalPengunjung: data.totalPengunjung,
         fotoUrl: data.fotoUrl,
+        // Pengunjung fields are intentionally not updatable here
       },
     });
 
-    return NextResponse.json(updatedActivity);
+    return NextResponse.json(updatedActivity, { status: 200 });
   } catch (error) {
     console.error('Error updating activity:', error);
     return NextResponse.json({ error: 'Failed to update activity' }, { status: 500 });
+  }
+});
+
+export const DELETE = withPermission('delete_kegiatan', async (req: NextRequest, { params }: { params: { id: string } }) => {
+  try {
+    const { id } = params;
+
+    // Optional: Check for related visitors and decide on a cascade rule if needed
+    await prisma.activityRecord.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ message: 'Activity deleted successfully' }, { status: 200 });
+  } catch (error) {
+    console.error('Error deleting activity:', error);
+    return NextResponse.json({ error: 'Failed to delete activity' }, { status: 500 });
   }
 });

@@ -57,7 +57,7 @@ import {
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
-import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -96,6 +96,7 @@ export default function PendaftaranPage() {
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     setIsClient(true);
@@ -157,9 +158,19 @@ export default function PendaftaranPage() {
   };
 
   async function onSaveSubmit(data: VisitorFormValues) {
+    if (!user?.posyanduName) {
+      toast({
+        variant: "destructive",
+        title: "Gagal Menyimpan Data",
+        description: "Nama Posyandu tidak ditemukan. Harap login ulang.",
+      });
+      return;
+    }
+
     const payload = {
       ...data,
       birthDate: data.birthDate.toISOString(),
+      posyanduName: user.posyanduName,
     };
 
     const apiPath = editingRecord
@@ -296,14 +307,14 @@ export default function PendaftaranPage() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="bayi">Bayi (0-1 th)</SelectItem>
-                    <SelectItem value="balita">Balita (1-5 th)</SelectItem>
-                    <SelectItem value="remaja">Remaja (10-18 th)</SelectItem>
-                    <SelectItem value="dewasa">Dewasa (19-59 th)</SelectItem>
-                    <SelectItem value="lansia">Lansia (60+ th)</SelectItem>
-                    <SelectItem value="bumil">Ibu Hamil</SelectItem>
-                    <SelectItem value="busui">Ibu Menyusui</SelectItem>
-                    <SelectItem value="bufas">Ibu Nifas</SelectItem>
+                    <SelectItem value="Bayi">Bayi (0-1 th)</SelectItem>
+                    <SelectItem value="Balita">Balita (1-5 th)</SelectItem>
+                    <SelectItem value="Remaja">Remaja (10-18 th)</SelectItem>
+                    <SelectItem value="Dewasa">Dewasa (19-59 th)</SelectItem>
+                    <SelectItem value="Lansia">Lansia (60+ th)</SelectItem>
+                    <SelectItem value="Ibu Hamil">Ibu Hamil</SelectItem>
+                    <SelectItem value="Ibu Menyusui">Ibu Menyusui</SelectItem>
+                    <SelectItem value="Ibu Nifas">Ibu Nifas</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

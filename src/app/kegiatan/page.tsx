@@ -147,7 +147,6 @@ export default function KegiatanPage() {
     null
   );
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const { toast } = useToast();
@@ -247,16 +246,16 @@ export default function KegiatanPage() {
   };
 
   async function onSaveSubmit(data: ActivityFormValues) {
+    if (!editingRecord) return;
+
     const payload = {
       ...data,
       fotoUrl: data.kegiatanFoto,
       activityDate: data.activityDate.toISOString(),
     };
 
-    const apiPath = editingRecord
-      ? `/api/kegiatan/${editingRecord.id}`
-      : "/api/kegiatan";
-    const method = editingRecord ? "PUT" : "POST";
+    const apiPath = `/api/kegiatan/${editingRecord.id}`;
+    const method = "PUT";
 
     try {
       const token = localStorage.getItem("auth-token");
@@ -270,41 +269,27 @@ export default function KegiatanPage() {
       });
 
       if (!response.ok) {
-        throw new Error(
-          `Failed to ${editingRecord ? "update" : "save"} activity`
-        );
+        throw new Error("Failed to update activity");
       }
 
       const resultRecord: ActivityRecord = await response.json();
-      if (editingRecord) {
-        setActivityData((prev) =>
-          prev.map((r) => (r.id === editingRecord.id ? resultRecord : r))
-        );
-      } else {
-        setActivityData((prev) => [resultRecord, ...prev]);
-      }
+      setActivityData((prev) =>
+        prev.map((r) => (r.id === editingRecord.id ? { ...r, ...resultRecord } : r))
+      );
 
       form.reset();
       setEditingRecord(null);
       setIsEditDialogOpen(false);
-      setIsCreateDialogOpen(false);
       toast({
         title: "Sukses",
-        description: `Data kegiatan berhasil ${
-          editingRecord ? "diperbarui" : "disimpan"
-        }.`,
+        description: "Data kegiatan berhasil diperbarui.",
       });
     } catch (error) {
-      console.error(
-        `Error ${editingRecord ? "updating" : "saving"} activity:`,
-        error
-      );
+      console.error("Error updating activity:", error);
       toast({
         variant: "destructive",
-        title: "Gagal Menyimpan Data",
-        description: `Terjadi kesalahan saat ${
-          editingRecord ? "memperbarui" : "menyimpan"
-        } data kegiatan.`,
+        title: "Gagal Memperbarui Data",
+        description: "Terjadi kesalahan saat memperbarui data kegiatan.",
       });
     }
   }
@@ -675,7 +660,7 @@ export default function KegiatanPage() {
             </div>
 
             <div>
-              <h3 className="mb-4 text-lg font-medium">Pengunjung</h3>
+              <h3 className="mb-4 text-lg font-medium">Pengunjung (Otomatis)</h3>
               <div className="grid grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
@@ -688,6 +673,8 @@ export default function KegiatanPage() {
                           type="number"
                           {...field}
                           value={field.value || ""}
+                          readOnly
+                          disabled
                         />
                       </FormControl>
                     </FormItem>
@@ -704,6 +691,8 @@ export default function KegiatanPage() {
                           type="number"
                           {...field}
                           value={field.value || ""}
+                          readOnly
+                          disabled
                         />
                       </FormControl>
                     </FormItem>
@@ -720,6 +709,8 @@ export default function KegiatanPage() {
                           type="number"
                           {...field}
                           value={field.value || ""}
+                          readOnly
+                          disabled
                         />
                       </FormControl>
                     </FormItem>
@@ -736,6 +727,8 @@ export default function KegiatanPage() {
                           type="number"
                           {...field}
                           value={field.value || ""}
+                          readOnly
+                          disabled
                         />
                       </FormControl>
                     </FormItem>
@@ -752,6 +745,8 @@ export default function KegiatanPage() {
                           type="number"
                           {...field}
                           value={field.value || ""}
+                          readOnly
+                          disabled
                         />
                       </FormControl>
                     </FormItem>
@@ -768,6 +763,8 @@ export default function KegiatanPage() {
                           type="number"
                           {...field}
                           value={field.value || ""}
+                          readOnly
+                          disabled
                         />
                       </FormControl>
                     </FormItem>
@@ -784,6 +781,8 @@ export default function KegiatanPage() {
                           type="number"
                           {...field}
                           value={field.value || ""}
+                          readOnly
+                          disabled
                         />
                       </FormControl>
                     </FormItem>
@@ -800,6 +799,8 @@ export default function KegiatanPage() {
                           type="number"
                           {...field}
                           value={field.value || ""}
+                          readOnly
+                          disabled
                         />
                       </FormControl>
                     </FormItem>
@@ -855,15 +856,6 @@ export default function KegiatanPage() {
             </h1>
           </div>
           <div className="flex gap-2">
-            {canCreate && (
-              <Button
-                onClick={() => setIsCreateDialogOpen(true)}
-                className="bg-[#5D1451] hover:bg-[#4A1040] text-white"
-              >
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Tambah Kegiatan
-              </Button>
-            )}
             {canExport && (
               <Button
                 onClick={handleExport}
@@ -928,36 +920,7 @@ export default function KegiatanPage() {
           </div>
         </div>
 
-        <Dialog
-          open={isCreateDialogOpen}
-          onOpenChange={setIsCreateDialogOpen}
-        >
-          <DialogContent className="w-full max-w-lg max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Catat Kegiatan Baru</DialogTitle>
-              <CardDescription>
-                Isi formulir untuk melaporkan kegiatan baru.
-              </CardDescription>
-            </DialogHeader>
-            {renderForm(false)}
-            <DialogFooter>
-              <Button
-                onClick={() => setIsCreateDialogOpen(false)}
-                variant="outline"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50"
-              >
-                Batal
-              </Button>
-              <Button
-                type="submit"
-                form="create-kegiatan-form"
-                className="bg-[#5D1451] hover:bg-[#4A1040] text-white"
-              >
-                Simpan Kegiatan
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        
 
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-5">
           <div className="lg:col-span-5">
