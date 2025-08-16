@@ -58,11 +58,13 @@ model AttendanceSchedule {
 }
 
 model AttendanceConfig {
-  id          String   @id @default(uuid())
-  configDate  DateTime @unique @map("config_date")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(uuid())
+  configDate   DateTime @map("config_date")
+  posyanduName String   @map("posyandu_name")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
+  @@unique([configDate, posyanduName], map: "attendance_configs_config_date_posyandu_name_key")
   @@map("attendance_configs")
 }
 

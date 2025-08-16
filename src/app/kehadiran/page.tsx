@@ -108,7 +108,12 @@ export default function KehadiranPage() {
   const fetchAttendanceConfig = async () => {
     try {
       const token = localStorage.getItem("auth-token");
-      const response = await fetch("/api/admin/attendance-config", {
+      const params = new URLSearchParams();
+      if (user?.posyanduName) {
+        params.append("posyanduName", user.posyanduName);
+      }
+      
+      const response = await fetch(`/api/admin/attendance-config?${params.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

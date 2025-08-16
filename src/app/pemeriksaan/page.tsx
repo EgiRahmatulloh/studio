@@ -131,11 +131,16 @@ export default function PemeriksaanPage() {
 
   const fetchExaminations = async (start?: Date, end?: Date) => {
     try {
+      const token = localStorage.getItem("auth-token");
       const params = new URLSearchParams();
       if (start) params.append("startDate", start.toISOString());
       if (end) params.append("endDate", end.toISOString());
 
-      const response = await fetch(`/api/pemeriksaan?${params.toString()}`);
+      const response = await fetch(`/api/pemeriksaan?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to fetch examinations");
@@ -198,7 +203,12 @@ export default function PemeriksaanPage() {
 
   const fetchVisitors = async () => {
     try {
-      const response = await fetch('/api/pendaftaran');
+      const token = localStorage.getItem("auth-token");
+      const response = await fetch('/api/pendaftaran', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to fetch visitors");
@@ -242,10 +252,12 @@ export default function PemeriksaanPage() {
     };
 
     try {
+      const token = localStorage.getItem("auth-token");
       const response = await fetch("/api/pemeriksaan", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });

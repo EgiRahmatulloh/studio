@@ -3,7 +3,21 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
   try {
-    const config = await prisma.attendanceConfig.findFirst();
+    const { searchParams } = new URL(req.url);
+    const posyanduName = searchParams.get('posyanduName');
+    
+    if (!posyanduName) {
+      return NextResponse.json({ message: 'posyanduName parameter is required' }, { status: 400 });
+    }
+    
+    const config = await prisma.attendanceConfig.findFirst({
+      where: {
+        posyanduName: posyanduName
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
     return NextResponse.json(config);
   } catch (error) {
     console.error('Error fetching attendance config:', error);
@@ -13,10 +27,16 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { configDate } = await req.json();
+    const { configDate, posyanduName } = await req.json();
+    
+    if (!posyanduName) {
+      return NextResponse.json({ message: 'posyanduName is required' }, { status: 400 });
+    }
+    
     const newConfig = await prisma.attendanceConfig.create({
       data: {
         configDate: new Date(configDate),
+        posyanduName: posyanduName,
       },
     });
     return NextResponse.json(newConfig, { status: 201 });
@@ -28,11 +48,17 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const { id, configDate } = await req.json();
+    const { id, configDate, posyanduName } = await req.json();
+    
+    if (!posyanduName) {
+      return NextResponse.json({ message: 'posyanduName is required' }, { status: 400 });
+    }
+    
     const updatedConfig = await prisma.attendanceConfig.update({
       where: { id },
       data: {
         configDate: new Date(configDate),
+        posyanduName: posyanduName,
       },
     });
     return NextResponse.json(updatedConfig);

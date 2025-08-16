@@ -4,32 +4,31 @@ import { withPermission } from '@/lib/middleware';
 
 const prisma = new PrismaClient();
 
-export const GET = withPermission('view_kegiatan', async (req: NextRequest) => {
+export const GET = withPermission('view_kegiatan', async (req: NextRequest, user, context) => {
   try {
     const { searchParams } = new URL(req.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    let whereClause = {};
+    let whereClause: any = {};
+    
+    // Admin dapat melihat semua data, user biasa hanya data posyandu mereka
+    if (user.role !== 'ADMIN') {
+      whereClause.posyanduName = user.posyanduName;
+    }
 
     if (startDate && endDate) {
-      whereClause = {
-        activityDate: {
-          gte: new Date(startDate),
-          lte: new Date(endDate),
-        },
+      whereClause.activityDate = {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
       };
     } else if (startDate) {
-      whereClause = {
-        activityDate: {
-          gte: new Date(startDate),
-        },
+      whereClause.activityDate = {
+        gte: new Date(startDate),
       };
     } else if (endDate) {
-      whereClause = {
-        activityDate: {
-          lte: new Date(endDate),
-        },
+      whereClause.activityDate = {
+        lte: new Date(endDate),
       };
     }
 

@@ -1,15 +1,21 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { withPermission } from '@/lib/middleware';
 
 const prisma = new PrismaClient();
 
-export async function GET(request: Request) {
+export const GET = withPermission('view_pendaftaran', async (req: NextRequest, user, context) => {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(req.url);
     const startDateParam = searchParams.get("startDate");
     const endDateParam = searchParams.get("endDate");
 
     let whereClause: any = {};
+    
+    // Admin dapat melihat semua data, user biasa hanya data posyandu mereka
+    if (user.role !== 'ADMIN') {
+      whereClause.posyanduName = user.posyanduName;
+    }
 
     if (startDateParam && endDateParam) {
       whereClause.createdAt = {
@@ -40,12 +46,13 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withPermission('create_pendaftaran', async (req: NextRequest, user, context) => {
   try {
-    const body = await request.json();
-    const { name, birthDate, gender, category, posyanduName } = body;
+    const body = await req.json();
+    const { name, birthDate, gender, category } = body;
+    const posyanduName = user.posyanduName;
 
     if (!name || !birthDate || !gender || !category || !posyanduName) {
       return NextResponse.json(
@@ -148,4 +155,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+});

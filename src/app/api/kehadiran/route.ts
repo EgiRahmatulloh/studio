@@ -6,32 +6,31 @@ import { AuthUser } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
-export const GET = withPermission('view_kehadiran', async (req: NextRequest) => {
+export const GET = withPermission('view_kehadiran', async (req: NextRequest, user, context) => {
   try {
     const { searchParams } = new URL(req.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    let whereClause = {};
+    let whereClause: any = {};
+    
+    // Admin dapat melihat semua data, user biasa hanya data posyandu mereka
+    if (user.role !== 'ADMIN') {
+      whereClause.posyanduName = user.posyanduName;
+    }
 
     if (startDate && endDate) {
-      whereClause = {
-        attendanceDate: {
-          gte: new Date(startDate),
-          lte: new Date(endDate),
-        },
+      whereClause.attendanceDate = {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
       };
     } else if (startDate) {
-      whereClause = {
-        attendanceDate: {
-          gte: new Date(startDate),
-        },
+      whereClause.attendanceDate = {
+        gte: new Date(startDate),
       };
     } else if (endDate) {
-      whereClause = {
-        attendanceDate: {
-          lte: new Date(endDate),
-        },
+      whereClause.attendanceDate = {
+        lte: new Date(endDate),
       };
     }
 
@@ -49,7 +48,7 @@ export const GET = withPermission('view_kehadiran', async (req: NextRequest) => 
 });
 
 
-export const POST = withPermission('create_kehadiran', async (req: NextRequest, user: AuthUser) => { // Add user parameter
+export const POST = withPermission('create_kehadiran', async (req: NextRequest, user: AuthUser, context) => {
   try {
     const data = await req.json();
 
@@ -83,8 +82,8 @@ export const POST = withPermission('create_kehadiran', async (req: NextRequest, 
 
     const newAttendance = await prisma.attendanceRecord.create({
       data: {
-        posyanduName: data.posyanduName,
-        fullName: data.fullName,
+        posyanduName: user.posyanduName,
+        fullName: user.fullName,
         attendanceDate: new Date(data.attendanceDate),
         schedule: {
           connectOrCreate: {

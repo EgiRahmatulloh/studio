@@ -80,8 +80,9 @@ export default function AdminPage() {
 
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  const [attendanceConfig, setAttendanceConfig] = useState<{ id: string; configDate: string } | null>(null);
+  const [attendanceConfig, setAttendanceConfig] = useState<{ id: string; configDate: string; posyanduName: string } | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedPosyandu, setSelectedPosyandu] = useState<string>("");
 
   const [newUser, setNewUser] = useState({
     email: "",
@@ -115,18 +116,26 @@ export default function AdminPage() {
     fetchAttendanceConfig();
   }, [currentUser, isAdmin, router]);
 
-  const fetchAttendanceConfig = async () => {
+  const fetchAttendanceConfig = async (posyanduName?: string) => {
+    if (!posyanduName && !selectedPosyandu) return;
+    
     try {
       const headers = getAuthHeader();
-      const response = await fetch("/api/admin/attendance-config", { headers });
+      const posyandu = posyanduName || selectedPosyandu;
+      const response = await fetch(`/api/admin/attendance-config?posyanduName=${encodeURIComponent(posyandu)}`, { headers });
       if (response.ok) {
         const data = await response.json();
         if (data) {
           setAttendanceConfig(data);
           setSelectedDate(new Date(data.configDate));
+        } else {
+          setAttendanceConfig(null);
+          setSelectedDate(undefined);
         }
       } else {
         console.error("Failed to fetch attendance config");
+        setAttendanceConfig(null);
+        setSelectedDate(undefined);
       }
     } catch (error) {
       console.error("Error fetching attendance config:", error);
@@ -143,9 +152,17 @@ export default function AdminPage() {
       return;
     }
 
+    if (!selectedPosyandu) {
+      toast({
+        title: "Error",
+        description: "Silakan pilih posyandu terlebih dahulu.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const headers = getAuthHeader();
-      const body = JSON.stringify({ configDate: selectedDate.toISOString() });
       let response;
 
       if (attendanceConfig) {
@@ -153,14 +170,21 @@ export default function AdminPage() {
         response = await fetch("/api/admin/attendance-config", {
           method: "PUT",
           headers: { ...headers, "Content-Type": "application/json" },
-          body: JSON.stringify({ id: attendanceConfig.id, configDate: selectedDate.toISOString() }),
+          body: JSON.stringify({ 
+            id: attendanceConfig.id, 
+            configDate: selectedDate.toISOString(),
+            posyanduName: selectedPosyandu
+          }),
         });
       } else {
         // Create new config
         response = await fetch("/api/admin/attendance-config", {
           method: "POST",
           headers: { ...headers, "Content-Type": "application/json" },
-          body: JSON.stringify({ configDate: selectedDate.toISOString() }),
+          body: JSON.stringify({ 
+            configDate: selectedDate.toISOString(),
+            posyanduName: selectedPosyandu
+          }),
         });
       }
 
@@ -170,7 +194,7 @@ export default function AdminPage() {
         setAttendanceConfig(data);
         toast({
           title: "Berhasil",
-          description: "Tanggal kehadiran berhasil disimpan.",
+          description: `Tanggal kehadiran untuk ${selectedPosyandu} berhasil disimpan.`,
         });
       } else {
         toast({
@@ -528,6 +552,90 @@ export default function AdminPage() {
           </Dialog>
         </div>
       </div>
+      {/* Attendance Configuration Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Konfigurasi Tanggal Kehadiran</CardTitle>
+          <CardDescription>
+            Atur tanggal pelaksanaan kehadiran posyandu.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="posyanduSelect">Pilih Posyandu</Label>
+              <Select
+                value={selectedPosyandu}
+                onValueChange={(value) => {
+                  setSelectedPosyandu(value);
+                  fetchAttendanceConfig(value);
+                }}
+              >
+                <SelectTrigger className="w-full sm:w-[240px]">
+                  <SelectValue placeholder="Pilih posyandu" />
+                </SelectTrigger>
+                <SelectContent>
+                  {POSYANDU_NAMES.map((name) => (
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="grid gap-2 w-full sm:w-auto">
+                <Label htmlFor="attendanceDate">Tanggal Kehadiran</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full sm:w-[240px] justify-start text-left font-normal",
+                        !selectedDate && "text-muted-foreground"
+                      )}
+                      disabled={!selectedPosyandu}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? (
+                        format(selectedDate, "PPP", { locale: id })
+                      ) : (
+                        <span>Pilih tanggal</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      initialFocus
+                      locale={id}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <Button
+                onClick={handleSaveAttendanceConfig}
+                className="w-full sm:w-auto bg-[#5D1451] hover:bg-[#4A1040] text-white mt-auto"
+                disabled={!selectedPosyandu || !selectedDate}
+              >
+                Simpan Tanggal
+              </Button>
+            </div>
+            
+            {attendanceConfig && selectedPosyandu && (
+              <p className="text-sm text-gray-600 mt-4">
+                Tanggal kehadiran untuk <span className="font-medium">{selectedPosyandu}</span>:{" "}
+                <span className="font-medium">
+                  {format(new Date(attendanceConfig.configDate), "PPP", { locale: id })}
+                </span>
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -649,63 +757,6 @@ export default function AdminPage() {
         </CardContent>
       </Card>
 
-      {/* Attendance Configuration Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Konfigurasi Tanggal Kehadiran</CardTitle>
-          <CardDescription>
-            Atur tanggal pelaksanaan kehadiran posyandu.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="grid gap-2 w-full sm:w-auto">
-              <Label htmlFor="attendanceDate">Tanggal Kehadiran</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full sm:w-[240px] justify-start text-left font-normal",
-                      !selectedDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? (
-                      format(selectedDate, "PPP", { locale: id })
-                    ) : (
-                      <span>Pilih tanggal</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    initialFocus
-                    locale={id}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <Button
-              onClick={handleSaveAttendanceConfig}
-              className="w-full sm:w-auto bg-[#5D1451] hover:bg-[#4A1040] text-white mt-auto"
-            >
-              Simpan Tanggal
-            </Button>
-          </div>
-          {attendanceConfig && (
-            <p className="text-sm text-gray-600 mt-4">
-              Tanggal kehadiran saat ini:{" "}
-              <span className="font-medium">
-                {format(new Date(attendanceConfig.configDate), "PPP", { locale: id })}
-              </span>
-            </p>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Edit User Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setEditDialogOpen}>

@@ -116,11 +116,16 @@ export default function PendaftaranPage() {
 
   const fetchVisitors = async (start?: Date, end?: Date) => {
     try {
+      const token = localStorage.getItem("auth-token");
       const params = new URLSearchParams();
       if (start) params.append("startDate", start.toISOString());
       if (end) params.append("endDate", end.toISOString());
 
-      const response = await fetch(`/api/pendaftaran?${params.toString()}`);
+      const response = await fetch(`/api/pendaftaran?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to fetch visitors");
@@ -179,10 +184,12 @@ export default function PendaftaranPage() {
     const method = editingRecord ? "PUT" : "POST";
 
     try {
+      const token = localStorage.getItem("auth-token");
       const response = await fetch(apiPath, {
         method,
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -309,8 +316,8 @@ export default function PendaftaranPage() {
                   <SelectContent>
                     <SelectItem value="Bayi">Bayi (0-1 th)</SelectItem>
                     <SelectItem value="Balita">Balita (1-5 th)</SelectItem>
-                    <SelectItem value="Remaja">Remaja (10-18 th)</SelectItem>
-                    <SelectItem value="Dewasa">Dewasa (19-59 th)</SelectItem>
+                    <SelectItem value="Remaja">Remaja (5-19 th)</SelectItem>
+                    <SelectItem value="Dewasa">Dewasa (20-59 th)</SelectItem>
                     <SelectItem value="Lansia">Lansia (60+ th)</SelectItem>
                     <SelectItem value="Ibu Hamil">Ibu Hamil</SelectItem>
                     <SelectItem value="Ibu Menyusui">Ibu Menyusui</SelectItem>
