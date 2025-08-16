@@ -275,7 +275,7 @@ export default function PendaftaranPage() {
                 <FormLabel>Jenis Kelamin</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  value={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -299,7 +299,7 @@ export default function PendaftaranPage() {
                 <FormLabel>Kategori</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  value={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>

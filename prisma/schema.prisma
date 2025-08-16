@@ -102,6 +102,20 @@ model Visitor {
   posyanduName    String        @map("posyandu_name")
   activityRecord  ActivityRecord? @relation(fields: [activityRecordId], references: [id])
   activityRecordId String?       @map("activity_record_id")
+  examinations    ExaminationRecord[]
 
   @@map("visitors")
+}
+
+model ExaminationRecord {
+  id              String        @id @default(uuid())
+  createdAt       DateTime      @default(now())
+  height          Float         @map("height")
+  weight          Float         @map("weight")
+  notes           String?       @map("notes")
+  posyanduName    String        @map("posyandu_name")
+  visitor         Visitor       @relation(fields: [visitorId], references: [id])
+  visitorId       String        @map("visitor_id")
+
+  @@map("examination_records")
 }

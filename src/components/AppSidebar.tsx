@@ -11,6 +11,7 @@ import {
   LogOut,
   User as UserIcon,
   Menu,
+  Ruler,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -127,6 +128,28 @@ export function AppSidebar() {
                   )}
                 />
                 Pendaftaran
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* Menu Pemeriksaan */}
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              className={cn(
+                "px-6 py-3",
+                isActive("/pemeriksaan") &&
+                  "bg-[#5D1451]/10 text-[#5D1451] font-medium border-l-4 border-[#5D1451]"
+              )}
+            >
+              <Link href="/pemeriksaan" className="flex items-center">
+                <Ruler
+                  className={cn(
+                    "mr-3",
+                    isActive("/pemeriksaan") && "text-[#5D1451]"
+                  )}
+                />
+                Pemeriksaan
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
